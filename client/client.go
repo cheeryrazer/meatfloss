@@ -1,12 +1,12 @@
 package client
 
 import (
-	"assistant_game_server/common"
-	"assistant_game_server/db"
-	"assistant_game_server/gameconf"
-	"assistant_game_server/gameredis"
-	"assistant_game_server/message"
-	"assistant_game_server/utils"
+	"meatfloss/common"
+	"meatfloss/db"
+	"meatfloss/gameconf"
+	"meatfloss/gameredis"
+	"meatfloss/message"
+	"meatfloss/utils"
 	"encoding/json"
 	"errors"
 	"fmt"

@@ -1,9 +1,9 @@
 package gameconf
 
 import (
-	"assistant_game_server/db"
-	"assistant_game_server/message"
-	"assistant_game_server/utils"
+	"meatfloss/db"
+	"meatfloss/message"
+	"meatfloss/utils"
 	"encoding/json"
 	"fmt"
 	"strconv"

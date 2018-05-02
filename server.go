@@ -1,13 +1,13 @@
 package main
 
 import (
-	"assistant_game_server/client"
-	"assistant_game_server/config"
-	"assistant_game_server/db"
-	"assistant_game_server/gameconf"
-	"assistant_game_server/gameredis"
-	"assistant_game_server/newspush"
-	"assistant_game_server/task"
+	"meatfloss/client"
+	"meatfloss/config"
+	"meatfloss/db"
+	"meatfloss/gameconf"
+	"meatfloss/gameredis"
+	"meatfloss/newspush"
+	"meatfloss/task"
 	"flag"
 	"fmt"
 	"html/template"

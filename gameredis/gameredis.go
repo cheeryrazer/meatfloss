@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"assistant_game_server/common"
-	"assistant_game_server/config"
-	"assistant_game_server/db"
-	"assistant_game_server/message"
+	"meatfloss/common"
+	"meatfloss/config"
+	"meatfloss/db"
+	"meatfloss/message"
 
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"

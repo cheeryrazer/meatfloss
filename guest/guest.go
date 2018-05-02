@@ -1,8 +1,8 @@
 package guest
 
 import (
-	"assistant_game_server/gameconf"
-	"assistant_game_server/utils"
+	"meatfloss/gameconf"
+	"meatfloss/utils"
 )
 
 // var (

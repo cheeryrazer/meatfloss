@@ -1,9 +1,9 @@
 package newspush
 
 import (
-	"assistant_game_server/client"
-	"assistant_game_server/gameredis"
-	"assistant_game_server/message"
+	"meatfloss/client"
+	"meatfloss/gameredis"
+	"meatfloss/message"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

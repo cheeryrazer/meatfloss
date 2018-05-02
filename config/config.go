@@ -38,6 +38,7 @@ type Configuration struct {
 		Password string `json:"password"`
 		Port     int    `json:"port"`
 		User     string `json:"user"`
+		DbName   string `json:"dbName"`
 	} `json:"mysqlServer"`
 	IsTestEnvioriment bool `json:"IsTestEnvioriment"`
 }
