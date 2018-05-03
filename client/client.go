@@ -10,11 +10,14 @@ import (
 	"meatfloss/gameconf"
 	"meatfloss/gameuser"
 	"meatfloss/message"
+	"meatfloss/persistent"
 	"meatfloss/usermgr"
 	"meatfloss/utils"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/mohae/deepcopy"
 
 	"github.com/golang/glog"
 
@@ -209,6 +212,11 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	user := gameuser.NewUser(userID)
 	// TODO, init user.
 	c.user = user
+
+	cpy := deepcopy.Copy(user)
+	newUser, _ := cpy.(*gameuser.User)
+	_ = newUser
+	persistent.AddUser(userID, newUser)
 	return
 }
 

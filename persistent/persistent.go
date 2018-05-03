@@ -1,23 +1,15 @@
 package persistent
 
 import (
-	"encoding/json"
-	"fmt"
+	"meatfloss/gameredis"
 	"meatfloss/gameuser"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 var (
 	lock         sync.RWMutex
 	changedUsers map[int]*gameuser.User
-	levelDB      *leveldb.DB
 )
 
 func init() {
@@ -26,16 +18,6 @@ func init() {
 
 // Start ...
 func Start() {
-	leveldbDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	if !strings.HasSuffix(leveldbDir, string(os.PathSeparator)) {
-		leveldbDir += string(os.PathSeparator)
-	}
-	leveldbDir += "leveldb"
-	db, err := leveldb.OpenFile(leveldbDir, nil)
-	if err != nil {
-		glog.Error("leveldb.OpenFile failed: ", err)
-	}
-	levelDB = db
 	go Worker()
 }
 
@@ -45,24 +27,13 @@ func persistUsers() {
 	changedUsers = make(map[int]*gameuser.User)
 	_ = users
 	lock.Unlock()
-	batch := new(leveldb.Batch)
-	for userID, usr := range changedUsers {
-		_ = userID
-		_ = usr
-		usr.Lock.RLock()
-		data, err := json.Marshal(usr)
-		usr.Lock.RUnlock()
-		if err != nil {
-			glog.Info("json.Marshal failed in persistUsers")
-			continue
-		}
-		key := fmt.Sprintf("user:%d", userID)
-		batch.Put([]byte(key), data)
-	}
-	if batch.Len() > 0 {
-		err := levelDB.Write(batch, nil)
-		if err != nil {
-			glog.Info("levelDB.Write failed.")
+	for userID, user := range users {
+		for {
+			err := gameredis.PersistUser(userID, user)
+			if err == nil {
+				break
+			}
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -79,22 +50,15 @@ func Worker() {
 func AddUser(userID int, user *gameuser.User) {
 	lock.Lock()
 	defer lock.Unlock()
+	oldUser, ok := changedUsers[userID]
+	if ok {
+		return
+	}
+	_ = oldUser
 	changedUsers[userID] = user
 }
 
 // LoadUser ...
 func LoadUser(userID int) (user *gameuser.User) {
-	key := fmt.Sprintf("user:%d", userID)
-	value, err := levelDB.Get([]byte(key), nil)
-	if err != nil {
-		glog.Info("load user from levelDB failed")
-		return nil
-	}
-	user = &gameuser.User{}
-	err = json.Unmarshal(value, user)
-	if err != nil {
-		glog.Info("json.Unmarshal failed in LoadUser")
-		return nil
-	}
-	return
+	return gameredis.LoadUser(userID)
 }

@@ -35,7 +35,7 @@ func Initialize(host string, port int, user, password string) error {
 
 // GetUserID ...
 func GetUserID(phone string) (userID int, err error) {
-	sql := fmt.Sprintf("SELECT id from db2_utan_meatfloss.tbl_account where account = '%s'", phone)
+	sql := fmt.Sprintf("SELECT id from meatfloss.tbl_account where account = '%s'", phone)
 	glog.Info(sql)
 	rows, err := db.Query(sql)
 	if err != nil {
@@ -56,7 +56,7 @@ func GetUserID(phone string) (userID int, err error) {
 
 // CreateAccount ...
 func CreateAccount(account string) (userID int, err error) {
-	sql := fmt.Sprintf("INSERT INTO db2_utan_meatfloss.tbl_account(account) values ('%s')", account)
+	sql := fmt.Sprintf("INSERT INTO meatfloss.tbl_account(account) values ('%s')", account)
 	glog.Info(sql)
 	res, err := db.Exec(sql)
 	if err != nil {
@@ -72,7 +72,7 @@ func CreateAccount(account string) (userID int, err error) {
 	userID = int(id)
 	return
 
-	// sql := fmt.Sprintf("INSERT INTO db2_utan_meatfloss.tbl_roles(role_id, user_id, name, name, type) values ('%s')", account)
+	// sql := fmt.Sprintf("INSERT INTO meatfloss.tbl_roles(role_id, user_id, name, name, type) values ('%s')", account)
 	// glog.Info(sql)
 	// res, err := db.Exec(sql)
 	// if err != nil {
@@ -83,7 +83,7 @@ func CreateAccount(account string) (userID int, err error) {
 
 // GetAllUserIDs ...
 func GetAllUserIDs() (userIDs []int, err error) {
-	sql := fmt.Sprintf("SELECT id from db2_utan_meatfloss.tbl_account")
+	sql := fmt.Sprintf("SELECT id from meatfloss.tbl_account")
 	glog.Info(sql)
 	rows, err := db.Query(sql)
 	if err != nil {
@@ -128,7 +128,7 @@ type Goods struct {
 func LoadGoodsConf() ([]*Goods, error) {
 	const sqlstr = `SELECT ` +
 		`id, type, order_id, consumable, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, experience_gain, friendly_degree_gain, allow_pileup` +
-		` FROM db2_utan_meatfloss.tbl_goods `
+		` FROM meatfloss.tbl_goods `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -171,7 +171,7 @@ type NPC struct {
 
 // LoadNPCConf ...
 func LoadNPCConf() (npcList []NPC, err error) {
-	sql := fmt.Sprintf("select id, name, description, gender, spine, decoration_type, guest_decoration, intimacy, intelligence, stamina, guest_probability from db2_utan_meatfloss.tbl_npc")
+	sql := fmt.Sprintf("select id, name, description, gender, spine, decoration_type, guest_decoration, intimacy, intelligence, stamina, guest_probability from meatfloss.tbl_npc")
 	rows, err := db.Query(sql)
 	if err != nil {
 		glog.Errorf("failed to execute %s", sql)
@@ -234,7 +234,7 @@ type Task struct {
 
 // LoadTaskConf ...
 func LoadTaskConf() (objList []Task, err error) {
-	sql := fmt.Sprintf("select id, stars, type, min_level, npc, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, association_group, trigger_order, intimacy_npc, intimacy_gain, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time from db2_utan_meatfloss.tbl_task")
+	sql := fmt.Sprintf("select id, stars, type, min_level, npc, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, association_group, trigger_order, intimacy_npc, intimacy_gain, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time from meatfloss.tbl_task")
 	rows, err := db.Query(sql)
 	if err != nil {
 		glog.Errorf("failed to execute %s", sql)
@@ -280,7 +280,7 @@ func LoadTaskConf() (objList []Task, err error) {
 	return
 }
 
-// RandomEvent represents a row from 'db2_utan_meatfloss.tbl_event'.
+// RandomEvent represents a row from 'meatfloss.tbl_event'.
 type RandomEvent struct {
 	ID              string `json:"id"`                // id
 	Stars           int    `json:"stars"`             // stars
@@ -312,7 +312,7 @@ type RandomEvent struct {
 func LoadRandomEventConf() ([]*RandomEvent, error) {
 	const sqlstr = `SELECT ` +
 		`id, stars, type, time, min_level, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time` +
-		` FROM db2_utan_meatfloss.tbl_event `
+		` FROM meatfloss.tbl_event `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -365,7 +365,7 @@ type NPCGuest struct {
 func LoadNPCGuestConf() ([]*NPCGuest, error) {
 	const sqlstr = `SELECT ` +
 		`id, association_npc, npc_name, intimacy_level, npc_duration, dialog1, dialog2, dialog3, reward, max_reward_times, gift, intimacy_gain, max_intimacy_daily, npc_period, auto_probability, question_library, max_questions_daily` +
-		` FROM db2_utan_meatfloss.tbl_guest `
+		` FROM meatfloss.tbl_guest `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -390,7 +390,7 @@ func LoadNPCGuestConf() ([]*NPCGuest, error) {
 	return res, nil
 }
 
-// Apparel represents a row from 'db2_utan_meatfloss.tbl_apparel'.
+// Apparel represents a row from 'meatfloss.tbl_apparel'.
 type Apparel struct {
 	ID                 string `json:"id"`                   // id
 	Type               int    `json:"type"`                 // type
@@ -414,7 +414,7 @@ type Apparel struct {
 func LoadApparelConf() ([]*Apparel, error) {
 	const sqlstr = `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, friendly_degree_gain, stars, allow_pileup` +
-		` FROM db2_utan_meatfloss.tbl_apparel `
+		` FROM meatfloss.tbl_apparel `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -439,7 +439,7 @@ func LoadApparelConf() ([]*Apparel, error) {
 	return res, nil
 }
 
-// Furniture represents a row from 'db2_utan_meatfloss.tbl_furniture'.
+// Furniture represents a row from 'meatfloss.tbl_furniture'.
 type Furniture struct {
 	ID               string `json:"id"`                 // id
 	Type             int    `json:"type"`               // type
@@ -465,7 +465,7 @@ type Furniture struct {
 func LoadFurnitureConf() ([]*Furniture, error) {
 	const sqlstr = `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, dismantling, fashion_gain, warmth_gain, cool_gain, lovely_gain, motion_gain, stars, allow_pileup` +
-		` FROM db2_utan_meatfloss.tbl_furniture `
+		` FROM meatfloss.tbl_furniture `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {

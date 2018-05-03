@@ -1,18 +1,19 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"html/template"
+	"log"
+	"math/rand"
 	"meatfloss/client"
 	"meatfloss/config"
 	"meatfloss/db"
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
 	"meatfloss/newspush"
+	"meatfloss/persistent"
 	"meatfloss/task"
-	"flag"
-	"fmt"
-	"html/template"
-	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -82,6 +83,8 @@ func main() {
 	}
 
 	gameredis.Initialize()
+
+	persistent.Start()
 
 	http.HandleFunc("/meatfloss", handleClient)
 	http.HandleFunc("/", home)

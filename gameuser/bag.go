@@ -9,12 +9,14 @@ type BagCell struct {
 
 // Bag ...
 type Bag struct {
-	Cells map[int64]*BagCell
+	UserID int
+	Cells  map[int64]*BagCell
 }
 
 // NewBag ...
-func NewBag() *Bag {
+func NewBag(userID int) *Bag {
 	bag := &Bag{}
+	bag.UserID = userID
 	bag.Cells = make(map[int64]*BagCell)
 	return bag
 }
