@@ -29,3 +29,12 @@ func GetUser(userID int) *gameuser.User {
 	user = persistent.LoadUser(userID)
 	return user
 }
+
+// NewUser ...
+func NewUser(userID int) *gameuser.User {
+	user := gameuser.NewUser(userID)
+	allUsersLock.Lock()
+	allUsers[userID] = user
+	allUsersLock.Unlock()
+	return user
+}
