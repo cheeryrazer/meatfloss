@@ -71,7 +71,7 @@ func persistUsers() {
 func Worker() {
 	for {
 		time.Sleep(1 * time.Second)
-
+		persistUsers()
 	}
 }
 
