@@ -1,4 +1,4 @@
-package user
+package gameuser
 
 // Profile ...
 type Profile struct {
@@ -11,4 +11,11 @@ type Profile struct {
 	Intimacy     int
 	Stamina      int
 	Experience   int
+}
+
+// NewProfile ...
+func NewProfile(userID int) (profile *Profile) {
+	profile = &Profile{}
+	profile.UserID = userID
+	return
 }

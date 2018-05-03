@@ -1,18 +1,19 @@
 package client
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"math/rand"
 	"meatfloss/common"
 	"meatfloss/db"
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
 	"meatfloss/message"
 	"meatfloss/utils"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"log"
-	"math/rand"
 	"net"
+	"os/user"
 	"strconv"
 	"sync"
 	"time"
@@ -37,6 +38,7 @@ type GameClient struct {
 	KickOffChan   chan bool
 	profile       message.RoleProfile
 	bag           *common.Bag
+	user          *user.User
 }
 
 // HandleConnection ...
