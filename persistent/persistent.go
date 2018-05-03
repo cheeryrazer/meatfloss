@@ -51,11 +51,30 @@ func AddUser(userID int, user *gameuser.User) {
 	lock.Lock()
 	defer lock.Unlock()
 	oldUser, ok := changedUsers[userID]
-	if ok {
+	if !ok {
+		changedUsers[userID] = user
 		return
 	}
-	_ = oldUser
-	changedUsers[userID] = user
+
+	if user.Profile != nil {
+		oldUser.Profile = user.Profile
+	}
+
+	if user.Bag != nil {
+		oldUser.Bag = user.Bag
+	}
+
+	if user.TaskBox != nil {
+		oldUser.TaskBox = user.TaskBox
+	}
+
+	if user.NewsBox != nil {
+		oldUser.NewsBox = user.NewsBox
+	}
+
+	if user.EventBox != nil {
+		oldUser.EventBox = user.EventBox
+	}
 }
 
 // LoadUser ...
