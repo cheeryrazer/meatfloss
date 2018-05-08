@@ -8,20 +8,20 @@ import (
 	"math/rand"
 	"meatfloss/db"
 	"meatfloss/gameconf"
+	"meatfloss/gameredis"
 	"meatfloss/gameuser"
 	"meatfloss/message"
 	"meatfloss/persistent"
 	"meatfloss/usermgr"
 	"meatfloss/utils"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/mohae/deepcopy"
-
 	"github.com/golang/glog"
-
 	"github.com/gorilla/websocket"
+	"github.com/mohae/deepcopy"
 )
 
 // GameClient  ...
@@ -133,12 +133,68 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 	case message.MsgTypeMarkNewsAsReadReq:
 	//	return c.HandleMarkNewsAsReadReq(metaData, rawMsg)
 	case message.MsgTypeCreateTaskReq:
-	//	return c.HandleCreateTaskReq(metaData, rawMsg)
+		return c.HandleCreateTaskReq(metaData, rawMsg)
 	case message.MsgTypeFinishEventReq:
 		//	return c.HandleFinishEventReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+// HandleCreateTaskReq ...
+func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	req := &message.CreateTaskReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+
+	reply := &message.CreateTaskReply{}
+	reply.Meta.MessageType = "CreateTaskReply"
+	reply.Meta.MessageTypeID = message.MsgTypeCreateTaskReply
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	if len(c.user.TaskBox.Tasks) != 0 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "Task already exits"
+		c.SendMsg(reply)
+		return
+	}
+	npc := gameconf.GetNPC(req.Data.NPCID)
+	if npc == nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "npc not found"
+		c.SendMsg(reply)
+		return
+	}
+
+	task := c.GetTasksByNPC(npc)
+	if task == nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "could not create task"
+		c.SendMsg(reply)
+		return
+	}
+
+	newTaskInfo := &gameuser.TaskInfo{}
+	newTaskInfo.TaskID = task.ID
+	newTaskInfo.ID = gameredis.GetUniqueID()
+	newTaskInfo.NPCID = npc.ID
+	newTaskInfo.Timestamp = int(time.Now().Unix())
+	newTaskInfo.PreTime = task.PreTime
+	c.user.TaskBox.Tasks = append(c.user.TaskBox.Tasks, newTaskInfo)
+	c.persistTaskBox()
+	reply.Data.TaskID = strconv.FormatInt(newTaskInfo.ID, 10)
+
+	c.SendMsg(reply)
+	return
+}
+
+func (c *GameClient) persistTaskBox() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+	newUser.TaskBox = c.user.TaskBox
+	persistent.AddUser(c.UserID, newUser)
 }
 
 // HandleLoginReq ...

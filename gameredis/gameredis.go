@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"meatfloss/gameuser"
+	"strconv"
 
 	"meatfloss/config"
 
@@ -15,6 +16,15 @@ var (
 	// redisClient ...
 	redisClient *redis.Client
 )
+
+// GetRunningTask ...
+func GetRunningTask(userID int) (taskInfo string, err error) {
+	taskInfo, err = redisClient.HGet("runningTask", strconv.Itoa(userID)).Result()
+	if err == redis.Nil {
+		err = nil
+	}
+	return
+}
 
 // Initialize redis.
 func Initialize() {
