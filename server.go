@@ -76,6 +76,8 @@ func main() {
 		glog.Fatalf("db.Initialize failed, %s", err)
 	}
 
+	db.SetDefaultDbName(config.Get().MySQLServer[0].DbName)
+
 	err = gameconf.LoadFromDatabase()
 	if err != nil {
 		glog.Fatalf("gameconf.LoadFromDatabase failed, error: %s", err)
