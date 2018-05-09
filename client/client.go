@@ -134,6 +134,17 @@ func (c *GameClient) checkTasks() {
 	}
 
 	c.user.TaskBox.Tasks = make([]*gameuser.TaskInfo, 0)
+	c.persistTaskBox()
+}
+
+func (c *GameClient) persistTaskBox() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.TaskBox)
+	taskBox, _ := cpy.(*gameuser.TaskBox)
+	newUser.TaskBox = taskBox
+	persistent.AddUser(c.UserID, newUser)
 }
 
 func (c *GameClient) persistEventBox() {
@@ -456,13 +467,6 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 
 	c.SendMsg(reply)
 	return
-}
-
-func (c *GameClient) persistTaskBox() {
-	newUser := &gameuser.User{}
-	newUser.UserID = c.UserID
-	newUser.TaskBox = c.user.TaskBox
-	persistent.AddUser(c.UserID, newUser)
 }
 
 // HandleLoginReq ...
