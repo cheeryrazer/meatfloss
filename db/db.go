@@ -11,10 +11,16 @@ import (
 
 var (
 	// ErrNoRecord no record found
-	ErrNoRecord = errors.New("no record found")
+	ErrNoRecord   = errors.New("no record found")
+	defaultDbName = "meatfloss"
 )
 
 var db *sql.DB
+
+// SetDefaultDbName ...
+func SetDefaultDbName(dbName string) {
+	defaultDbName = dbName
+}
 
 // Initialize database.
 func Initialize(host string, port int, user, password string) error {
@@ -35,7 +41,7 @@ func Initialize(host string, port int, user, password string) error {
 
 // GetUserID ...
 func GetUserID(phone string) (userID int, err error) {
-	sql := fmt.Sprintf("SELECT id from meatfloss.tbl_account where account = '%s'", phone)
+	sql := fmt.Sprintf("SELECT id from %s.tbl_account where account = '%s'", defaultDbName, phone)
 	glog.Info(sql)
 	rows, err := db.Query(sql)
 	if err != nil {
@@ -56,7 +62,7 @@ func GetUserID(phone string) (userID int, err error) {
 
 // CreateAccount ...
 func CreateAccount(account string) (userID int, err error) {
-	sql := fmt.Sprintf("INSERT INTO meatfloss.tbl_account(account) values ('%s')", account)
+	sql := fmt.Sprintf("INSERT INTO %s.tbl_account(account) values ('%s')", defaultDbName, account)
 	glog.Info(sql)
 	res, err := db.Exec(sql)
 	if err != nil {
@@ -83,7 +89,7 @@ func CreateAccount(account string) (userID int, err error) {
 
 // GetAllUserIDs ...
 func GetAllUserIDs() (userIDs []int, err error) {
-	sql := fmt.Sprintf("SELECT id from meatfloss.tbl_account")
+	sql := fmt.Sprintf("SELECT id from %s.tbl_account", defaultDbName)
 	glog.Info(sql)
 	rows, err := db.Query(sql)
 	if err != nil {
@@ -126,9 +132,11 @@ type Goods struct {
 
 // LoadGoodsConf ...
 func LoadGoodsConf() ([]*Goods, error) {
-	const sqlstr = `SELECT ` +
+	sqlstr := `SELECT ` +
 		`id, type, order_id, consumable, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, experience_gain, friendly_degree_gain, allow_pileup` +
-		` FROM meatfloss.tbl_goods `
+		` FROM  `
+	sqlstr += defaultDbName
+	sqlstr += `.tbl_goods `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -171,7 +179,7 @@ type NPC struct {
 
 // LoadNPCConf ...
 func LoadNPCConf() (npcList []NPC, err error) {
-	sql := fmt.Sprintf("select id, name, description, gender, spine, decoration_type, guest_decoration, intimacy, intelligence, stamina, guest_probability from meatfloss.tbl_npc")
+	sql := fmt.Sprintf("select id, name, description, gender, spine, decoration_type, guest_decoration, intimacy, intelligence, stamina, guest_probability from %s.tbl_npc", defaultDbName)
 	rows, err := db.Query(sql)
 	if err != nil {
 		glog.Errorf("failed to execute %s", sql)
@@ -234,7 +242,7 @@ type Task struct {
 
 // LoadTaskConf ...
 func LoadTaskConf() (objList []Task, err error) {
-	sql := fmt.Sprintf("select id, stars, type, min_level, npc, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, association_group, trigger_order, intimacy_npc, intimacy_gain, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time from meatfloss.tbl_task")
+	sql := fmt.Sprintf("select id, stars, type, min_level, npc, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, association_group, trigger_order, intimacy_npc, intimacy_gain, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time from %s.tbl_task", defaultDbName)
 	rows, err := db.Query(sql)
 	if err != nil {
 		glog.Errorf("failed to execute %s", sql)
@@ -310,9 +318,9 @@ type RandomEvent struct {
 
 // LoadRandomEventConf ...
 func LoadRandomEventConf() ([]*RandomEvent, error) {
-	const sqlstr = `SELECT ` +
+	sqlstr := `SELECT ` +
 		`id, stars, type, time, min_level, intelligence, stamina, friendly_degree, daily_trigger_num, total_trigger_num, probability, image, description, choice1, choice2, choice3, reward1, exp1, reward2, exp2, reward3, exp3, pre_time, post_time` +
-		` FROM meatfloss.tbl_event `
+		` FROM ` + defaultDbName + `.tbl_event`
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -363,9 +371,9 @@ type NPCGuest struct {
 
 // LoadNPCGuestConf ...
 func LoadNPCGuestConf() ([]*NPCGuest, error) {
-	const sqlstr = `SELECT ` +
+	sqlstr := `SELECT ` +
 		`id, association_npc, npc_name, intimacy_level, npc_duration, dialog1, dialog2, dialog3, reward, max_reward_times, gift, intimacy_gain, max_intimacy_daily, npc_period, auto_probability, question_library, max_questions_daily` +
-		` FROM meatfloss.tbl_guest `
+		` FROM ` + defaultDbName + `.tbl_guest`
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -412,9 +420,9 @@ type Apparel struct {
 
 // LoadApparelConf ...
 func LoadApparelConf() ([]*Apparel, error) {
-	const sqlstr = `SELECT ` +
+	sqlstr := `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, friendly_degree_gain, stars, allow_pileup` +
-		` FROM meatfloss.tbl_apparel `
+		` FROM ` + defaultDbName + `.tbl_apparel `
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
@@ -463,10 +471,10 @@ type Furniture struct {
 
 // LoadFurnitureConf ...
 func LoadFurnitureConf() ([]*Furniture, error) {
-	const sqlstr = `SELECT ` +
+	sqlstr := `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, dismantling, fashion_gain, warmth_gain, cool_gain, lovely_gain, motion_gain, stars, allow_pileup` +
-		` FROM meatfloss.tbl_furniture `
-
+		` FROM ` + defaultDbName + `.tbl_furniture `
+	fmt.Println(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
