@@ -26,15 +26,16 @@ import (
 
 // GameClient  ...
 type GameClient struct {
-	rwmutex       sync.RWMutex
-	conn          *websocket.Conn
-	UniqueID      uint64
-	UserID        int
-	kickOffFlag   int32
-	logined       bool
-	replyChan     chan interface{}
-	helperChan    chan interface{}
-	waitGroup     sync.WaitGroup
+	lock        sync.RWMutex
+	conn        *websocket.Conn
+	UniqueID    uint64
+	UserID      int
+	kickOffFlag int32
+	logined     bool
+	replyChan   chan interface{}
+	helperChan  chan bool
+	waitGroup   sync.WaitGroup
+
 	maxNewsPushID uint64
 	KickOffChan   chan bool
 	user          *gameuser.User
@@ -46,9 +47,13 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.conn = conn
 	c.replyChan = make(chan interface{}, 128)
 	c.KickOffChan = make(chan bool, 1)
+	c.helperChan = make(chan bool, 1)
+
+	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
+	c.waitGroup.Add(3)
 	go c.HandleRead()
 	go c.HandleWrite()
-	c.waitGroup.Add(2)
+	go c.HandleHelper()
 
 	if c.UserID != 0 {
 		Mgr.onLogout(c)
@@ -57,7 +62,39 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.conn.Close()
 
 	c.KickOffChan <- true
+
 	glog.Info("session is gonna close")
+}
+
+// HandleHelper ...
+func (c *GameClient) HandleHelper() {
+	for {
+		exit := false
+		select {
+		case <-c.helperChan:
+			exit = true
+			break
+		case <-time.After(time.Second * 5):
+			c.onPeriod()
+		}
+		if exit {
+			break
+		}
+	}
+	glog.Info("HandleHelper exit")
+	c.waitGroup.Done()
+}
+
+func (c *GameClient) onPeriod() {
+	c.lock.Lock()
+	if c.UserID != 0 {
+		c.periodCheck()
+	}
+	c.lock.Unlock()
+}
+
+func (c *GameClient) periodCheck() {
+	glog.Info("check..................................")
 }
 
 // HandleWrite ...
@@ -89,12 +126,15 @@ func (c *GameClient) HandleRead() {
 			c.handleKickOff()
 			break
 		}
+
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
 		_ = mt
+		c.lock.Lock()
 		err = c.HandleMessage(message)
+		c.lock.Unlock()
 
 		if err != nil {
 			glog.Errorf("HandleMessage failed, error: %s", err)
@@ -102,6 +142,7 @@ func (c *GameClient) HandleRead() {
 		}
 	}
 	c.replyChan <- nil
+	c.helperChan <- true
 	c.waitGroup.Done()
 }
 
@@ -193,6 +234,14 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	c.SendMsg(reply)
 	err = c.AfterLogin()
 	return
+}
+
+// HandleTimeout ... true ignore error, otherwise not.
+func (c *GameClient) HandleTimeout() bool {
+	//	c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
+	//	glog.Error("HandleTimeout")
+	//return true
+	return false
 }
 
 // AfterLogin ...
