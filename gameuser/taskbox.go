@@ -1,25 +1,17 @@
 package gameuser
 
+import "meatfloss/common"
+
 // TaskBox ...
 type TaskBox struct {
 	UserID int
-	Tasks  []*TaskInfo
+	Tasks  []*common.TaskInfo
 }
 
 // NewTaskBox ...
 func NewTaskBox(userID int) *TaskBox {
 	box := &TaskBox{}
-	box.Tasks = make([]*TaskInfo, 0)
+	box.Tasks = make([]*common.TaskInfo, 0)
 	box.UserID = userID
 	return box
-}
-
-// TaskInfo ...
-type TaskInfo struct {
-	TaskID    string
-	Timestamp int
-	PreTime   int
-	UserID    int
-	ID        int64
-	NPCID     string
 }

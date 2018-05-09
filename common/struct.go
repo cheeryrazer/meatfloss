@@ -20,3 +20,13 @@ func NewBag(userID int) *Bag {
 	bag.Cells = make(map[int64]*BagCell)
 	return bag
 }
+
+// TaskInfo ...
+type TaskInfo struct {
+	TaskID    string
+	Timestamp int
+	PreTime   int
+	UserID    int
+	ID        int64
+	NPCID     string
+}

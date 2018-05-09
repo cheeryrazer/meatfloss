@@ -134,7 +134,7 @@ func (c *GameClient) checkTasks() {
 		c.SendMsg(msg)
 	}
 
-	c.user.TaskBox.Tasks = make([]*gameuser.TaskInfo, 0)
+	c.user.TaskBox.Tasks = make([]*common.TaskInfo, 0)
 	c.persistTaskBox()
 }
 
@@ -458,7 +458,7 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 		return
 	}
 
-	newTaskInfo := &gameuser.TaskInfo{}
+	newTaskInfo := &common.TaskInfo{}
 	newTaskInfo.TaskID = task.ID
 	newTaskInfo.ID = gameredis.GetUniqueID()
 	newTaskInfo.NPCID = npc.ID
