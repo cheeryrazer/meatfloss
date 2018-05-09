@@ -94,7 +94,55 @@ func (c *GameClient) onPeriod() {
 }
 
 func (c *GameClient) periodCheck() {
+	c.checkTasks()
 	glog.Info("check..................................")
+}
+
+func (c *GameClient) checkTasks() {
+	if len(c.user.TaskBox.Tasks) == 0 {
+		return
+	}
+	now := int(time.Now().Unix())
+	for userID, taskInfo := range c.user.TaskBox.Tasks {
+		if now <= taskInfo.Timestamp+taskInfo.PreTime {
+			continue
+		}
+		taskInfo.UserID = userID
+		var msg = message.EventNotify{}
+		oneEvent := &message.EventInfo{}
+		msg.Meta.MessageType = "EventNotify"
+		msg.Meta.MessageTypeID = message.MsgTypeEventNotify
+		msg.Data.UserID = userID
+		oneEvent.Type = "normal"
+		oneEvent.Title = "任务完成"
+		oneEvent.Content = "任务已经完成了"
+		oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
+		oneEvent.UserID = userID
+		oneEvent.EventID = taskInfo.TaskID
+		taskID := gameredis.GetUniqueID()
+		oneEvent.GenID = strconv.FormatInt(taskID, 10)
+		msg.Data.Events = append(msg.Data.Events, oneEvent)
+		{
+			cpy := deepcopy.Copy(oneEvent)
+			event, _ := cpy.(*message.EventInfo)
+			c.user.EventBox.Events[oneEvent.GenID] = event
+		}
+		c.persistEventBox()
+		c.SendMsg(msg)
+	}
+
+	c.user.TaskBox.Tasks = make([]*gameuser.TaskInfo, 0)
+}
+
+func (c *GameClient) persistEventBox() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+	//newUser.TaskBox = c.user.TaskBox
+
+	cpy := deepcopy.Copy(c.user.EventBox)
+	eventBox, _ := cpy.(*gameuser.EventBox)
+	newUser.EventBox = eventBox
+	persistent.AddUser(c.UserID, newUser)
 }
 
 // HandleWrite ...
@@ -308,6 +356,7 @@ func (c *GameClient) AfterLogin() (err error) {
 			glog.Errorf("usermgr.GetUser failed, userID: %d", c.UserID)
 			return errors.New("Load user failed")
 		}
+		c.user = user
 	}
 	return
 }

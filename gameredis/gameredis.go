@@ -100,11 +100,15 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.EventBox != nil {
 		data, err := json.Marshal(user.EventBox)
 		if err == nil {
+			glog.Info(string(data))
 			fields["eventbox"] = string(data)
 		}
 	}
 
 	_, err = redisClient.HMSet(key, fields).Result()
+	if err != nil {
+		glog.Warning("redisClient.HMSet failed, error: %s", err)
+	}
 
 	return
 }
@@ -194,7 +198,7 @@ func LoadUser(userID int) *gameuser.User {
 	if result[0] != nil {
 		data, ok := result[0].(string)
 		if ok && data != "" {
-			obj := &gameuser.EventBox{}
+			obj := gameuser.NewEventBox(userID)
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.EventBox = obj
