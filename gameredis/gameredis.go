@@ -164,8 +164,8 @@ func LoadUser(userID int) *gameuser.User {
 	}
 
 	// bag
-	if result[0] != nil {
-		data, ok := result[0].(string)
+	if result[1] != nil {
+		data, ok := result[1].(string)
 		if ok && data != "" {
 			obj := &gameuser.Bag{}
 			err := json.Unmarshal([]byte(data), obj)
@@ -178,13 +178,19 @@ func LoadUser(userID int) *gameuser.User {
 	}
 
 	// taskbox
-	if result[0] != nil {
-		data, ok := result[0].(string)
+	if result[2] != nil {
+		data, ok := result[2].(string)
 		if ok && data != "" {
 			obj := &gameuser.TaskBox{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.TaskBox = obj
+				taskNum := len(user.TaskBox.Tasks)
+				fmt.Println(data)
+				fmt.Println("userID: ", obj.UserID)
+				fmt.Println("taskNum: ", taskNum)
+
+				_ = taskNum
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -192,8 +198,8 @@ func LoadUser(userID int) *gameuser.User {
 	}
 
 	// newsbox
-	if result[0] != nil {
-		data, ok := result[0].(string)
+	if result[3] != nil {
+		data, ok := result[3].(string)
 		if ok && data != "" {
 			obj := &gameuser.NewsBox{}
 			err := json.Unmarshal([]byte(data), obj)
@@ -206,8 +212,8 @@ func LoadUser(userID int) *gameuser.User {
 	}
 
 	// eventbox
-	if result[0] != nil {
-		data, ok := result[0].(string)
+	if result[4] != nil {
+		data, ok := result[4].(string)
 		if ok && data != "" {
 			obj := gameuser.NewEventBox(userID)
 			err := json.Unmarshal([]byte(data), obj)

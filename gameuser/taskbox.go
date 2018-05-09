@@ -9,6 +9,7 @@ type TaskBox struct {
 // NewTaskBox ...
 func NewTaskBox(userID int) *TaskBox {
 	box := &TaskBox{}
+	box.Tasks = make([]*TaskInfo, 0)
 	box.UserID = userID
 	return box
 }

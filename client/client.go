@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"meatfloss/common"
 	"meatfloss/db"
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
@@ -40,7 +39,6 @@ type GameClient struct {
 	maxNewsPushID uint64
 	KickOffChan   chan bool
 	user          *gameuser.User
-	bag           *common.Bag
 }
 
 // HandleConnection ...
@@ -97,13 +95,15 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	glog.Info("check..................................")
 }
 
 func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
 		return
 	}
+
+	glog.Info("found task finished ...................")
+
 	now := int(time.Now().Unix())
 	for userID, taskInfo := range c.user.TaskBox.Tasks {
 		if now <= taskInfo.Timestamp+taskInfo.PreTime {
@@ -250,9 +250,8 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 		c.SendMsg(reply)
 		return errors.New("Bad choice")
 	}
-	eventInfo := c.user.EventBox.Events[req.Data.EventGenID]
-	_ = eventInfo
-	if eventInfo == nil {
+	eventInfo, ok := c.user.EventBox.Events[req.Data.EventGenID]
+	if !ok {
 		reply.Meta.Error = true
 		reply.Meta.ErrorMessage = "event not found"
 		c.SendMsg(reply)
@@ -305,15 +304,20 @@ func (c *GameClient) OnFinishNormalEvent(eventInfo *message.EventInfo, choice in
 	notify.Meta.MessageTypeID = message.MsgTypeUpdateGoodsNotify
 
 	notify.Data.List = updateInfos
-
-	err = gameredis.SaveBagInfo(c.UserID, c.bag)
-	if err != nil {
-		glog.Errorf("SaveBagInfo,  error : %s", err)
-		return
-	}
-	// 调试， 暂时不删
-	//	gameredis.DelEvent(c.UserID, eventInfo.GenID)
+	c.persistBagBox()
+	// 删除事件
+	c.persistEventBox()
 	c.SendMsg(notify)
+}
+
+func (c *GameClient) persistBagBox() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.Bag)
+	bag, _ := cpy.(*gameuser.Bag)
+	newUser.Bag = bag
+	persistent.AddUser(c.UserID, newUser)
 }
 
 // PutToBagBatch ...
@@ -334,14 +338,14 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 			disallowPileupNum++
 		} else {
 			// 如果允许重叠
-			_, ok := c.bag.Cells[goods.UniqueID]
+			_, ok := c.user.Bag.Cells[goods.UniqueID]
 			if !ok {
 				cellNumAtLeast++
 			}
 		}
 	}
 
-	if cellNumAtLeast+len(c.bag.Cells) > 81 {
+	if cellNumAtLeast+len(c.user.Bag.Cells) > 81 {
 		return nil, errors.New("insufficient cells")
 	}
 	_ = uniqueIDs
@@ -351,11 +355,11 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 	for i, goods := range goodsList {
 		if goods.AllowPileup != 1 {
 			uniqueID := gameredis.GetGoodsUniqueID()
-			cell := &common.BagCell{}
+			cell := &gameuser.BagCell{}
 			cell.Count = goodsCounts[i]
 			cell.GoodsID = goodsIDs[i]
 			cell.UniqueID = goods.UniqueID
-			c.bag.Cells[uniqueID] = cell
+			c.user.Bag.Cells[uniqueID] = cell
 
 			gui := &message.GoodsUpdateInfo{}
 			gui.GoodsID = cell.GoodsID
@@ -365,13 +369,13 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 			deltaMap[uniqueID] = gui
 		} else {
 			// 如果允许重叠
-			cell, ok := c.bag.Cells[goods.UniqueID]
+			cell, ok := c.user.Bag.Cells[goods.UniqueID]
 			if !ok {
-				cell = &common.BagCell{}
+				cell = &gameuser.BagCell{}
 				cell.Count = goodsCounts[i]
 				cell.GoodsID = goodsIDs[i]
 				cell.UniqueID = goods.UniqueID
-				c.bag.Cells[goods.UniqueID] = cell
+				c.user.Bag.Cells[goods.UniqueID] = cell
 			} else {
 				cell.Count += goodsCounts[i]
 			}
