@@ -167,7 +167,7 @@ func LoadUser(userID int) *gameuser.User {
 	if result[1] != nil {
 		data, ok := result[1].(string)
 		if ok && data != "" {
-			obj := &gameuser.Bag{}
+			obj := &common.Bag{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.Bag = obj
@@ -230,7 +230,7 @@ func LoadUser(userID int) *gameuser.User {
 	}
 
 	if user.Bag == nil {
-		user.Bag = gameuser.NewBag(userID)
+		user.Bag = common.NewBag(userID)
 	}
 
 	if user.TaskBox == nil {

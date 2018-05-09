@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"meatfloss/common"
 	"meatfloss/db"
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
@@ -328,7 +329,7 @@ func (c *GameClient) persistBagBox() {
 	newUser.UserID = c.UserID
 
 	cpy := deepcopy.Copy(c.user.Bag)
-	bag, _ := cpy.(*gameuser.Bag)
+	bag, _ := cpy.(*common.Bag)
 	newUser.Bag = bag
 	persistent.AddUser(c.UserID, newUser)
 }
@@ -368,7 +369,7 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 	for i, goods := range goodsList {
 		if goods.AllowPileup != 1 {
 			uniqueID := gameredis.GetGoodsUniqueID()
-			cell := &gameuser.BagCell{}
+			cell := &common.BagCell{}
 			cell.Count = goodsCounts[i]
 			cell.GoodsID = goodsIDs[i]
 			cell.UniqueID = goods.UniqueID
@@ -384,7 +385,7 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 			// 如果允许重叠
 			cell, ok := c.user.Bag.Cells[goods.UniqueID]
 			if !ok {
-				cell = &gameuser.BagCell{}
+				cell = &common.BagCell{}
 				cell.Count = goodsCounts[i]
 				cell.GoodsID = goodsIDs[i]
 				cell.UniqueID = goods.UniqueID
