@@ -273,6 +273,8 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	// 然后下就是推送奖励
 	if eventInfo.Type == "normal" {
 		c.OnFinishNormalEvent(eventInfo, req.Data.Choice)
+		delete(c.user.EventBox.Events, req.Data.EventGenID)
+		c.persistEventBox()
 	} else if eventInfo.Type == "select" {
 		c.OnFinishRandomEvent(eventInfo)
 	}
