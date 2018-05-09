@@ -29,4 +29,5 @@ type TaskInfo struct {
 	UserID    int
 	ID        int64
 	NPCID     string
+	Time      string
 }

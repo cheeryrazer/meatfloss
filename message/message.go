@@ -1,5 +1,7 @@
 package message
 
+import "meatfloss/common"
+
 // ReqMetaData ...
 type ReqMetaData struct {
 	MessageType       string `json:"messageType"`       // 消息的名字， 填字符串
@@ -215,6 +217,19 @@ type NPCGuestNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		NPCList []string `json:"npcList"`
+	} `json:"data"`
+}
+
+// MsgTypeTaskNotify ...
+const MsgTypeTaskNotify int32 = 3400
+
+// TaskNotify ...
+//  服务端推送时间
+type TaskNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Tasks  []*common.TaskInfo `json:"tasks"`
+		UserID int                `json:"userId"`
 	} `json:"data"`
 }
 

@@ -102,6 +102,7 @@ func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
 		return
 	}
+	return
 
 	glog.Info("found task finished ...................")
 
@@ -590,10 +591,25 @@ func (c *GameClient) PushRoleInfo() (err error) {
 		var msg = message.EventNotify{}
 		msg.Meta.MessageType = "EventNotify"
 		msg.Meta.MessageTypeID = message.MsgTypeEventNotify
-
+		msg.Data.Events = make([]*message.EventInfo, 0)
 		for _, myEvent := range c.user.EventBox.Events {
 			msg.Data.Events = append(msg.Data.Events, myEvent)
 
+		}
+		msg.Data.UserID = c.user.UserID
+		c.SendMsg(msg)
+	}
+
+	{
+
+		var msg = message.TaskNotify{}
+		msg.Meta.MessageType = "TaskNotify"
+		msg.Meta.MessageTypeID = message.MsgTypeTaskNotify
+		msg.Data.Tasks = make([]*common.TaskInfo, 0)
+
+		for _, myTask := range c.user.TaskBox.Tasks {
+			// 必要的时候, deepcopy一份
+			msg.Data.Tasks = append(msg.Data.Tasks, myTask)
 		}
 		msg.Data.UserID = c.user.UserID
 		c.SendMsg(msg)
