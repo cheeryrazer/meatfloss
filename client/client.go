@@ -554,8 +554,51 @@ func (c *GameClient) AfterLogin() (err error) {
 
 // PushRoleInfo ...
 func (c *GameClient) PushRoleInfo() (err error) {
-	info := &message.GameBaseInfoNotify{}
-	_ = info
+	// send base info.
+	{
+		info := &message.GameBaseInfoNotify{}
+		// copy profile.
+		info.Data.Profile = &message.RoleProfile{}
+		info.Data.Profile.UserID = c.UserID
+		info.Data.Profile.Experience = c.user.Profile.Experience
+		info.Data.Profile.Gender = c.user.Profile.Gender
+		info.Data.Profile.Intelligence = c.user.Profile.Intelligence
+		info.Data.Profile.Intimacy = c.user.Profile.Intimacy
+		info.Data.Profile.Level = c.user.Profile.Level
+		info.Data.Profile.Name = c.user.Profile.Name
+		info.Data.Profile.Spine = c.user.Profile.Spine
+		info.Data.Profile.Stamina = c.user.Profile.Stamina
+
+		// bag.
+		info.Data.Bag.Cells = make([]message.CellInfo, 0)
+		for _, mycell := range c.user.Bag.Cells {
+			cell := message.CellInfo{}
+			cell.Count = mycell.Count
+			cell.GoodsID = mycell.GoodsID
+			cell.UniqueID = mycell.UniqueID
+			info.Data.Bag.Cells = append(info.Data.Bag.Cells, cell)
+		}
+
+		info.Meta.MessageType = "GameBaseInfoNotify"
+		info.Meta.MessageTypeID = message.MsgTypeGameBaseInfoNotify
+		c.SendMsg(info)
+	}
+
+	// send events.
+	{
+
+		var msg = message.EventNotify{}
+		msg.Meta.MessageType = "EventNotify"
+		msg.Meta.MessageTypeID = message.MsgTypeEventNotify
+
+		for _, myEvent := range c.user.EventBox.Events {
+			msg.Data.Events = append(msg.Data.Events, myEvent)
+
+		}
+		msg.Data.UserID = c.user.UserID
+		c.SendMsg(msg)
+	}
+
 	return
 }
 

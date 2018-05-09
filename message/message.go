@@ -201,7 +201,7 @@ const MsgTypeGameBaseInfoNotify int32 = 3300
 type GameBaseInfoNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Profile RoleProfile   `json:"profile"`
+		Profile *RoleProfile  `json:"profile"`
 		Bag     RoleBag       `json:"bag"`
 		Tasks   []RunningTask `json:"tasks"`
 	} `json:"data"`
