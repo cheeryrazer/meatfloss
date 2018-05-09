@@ -102,7 +102,6 @@ func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
 		return
 	}
-	return
 
 	glog.Info("found task finished ...................")
 
