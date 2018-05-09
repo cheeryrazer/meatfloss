@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"meatfloss/common"
 	"meatfloss/db"
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
@@ -39,6 +40,7 @@ type GameClient struct {
 	maxNewsPushID uint64
 	KickOffChan   chan bool
 	user          *gameuser.User
+	bag           *common.Bag
 }
 
 // HandleConnection ...
@@ -224,10 +226,183 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 	case message.MsgTypeCreateTaskReq:
 		return c.HandleCreateTaskReq(metaData, rawMsg)
 	case message.MsgTypeFinishEventReq:
-		//	return c.HandleFinishEventReq(metaData, rawMsg)
+		return c.HandleFinishEventReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+// HandleFinishEventReq ...
+func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	req := &message.FinishEventReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+	reply := &message.FinishEventReply{}
+	reply.Meta.MessageType = "FinishEventReply"
+	reply.Meta.MessageTypeID = message.MsgTypeFinishEventReply
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	if req.Data.Choice < 1 || req.Data.Choice > 3 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "bad choice"
+		c.SendMsg(reply)
+		return errors.New("Bad choice")
+	}
+	eventInfo := c.user.EventBox.Events[req.Data.EventGenID]
+	_ = eventInfo
+	if eventInfo == nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "event not found"
+		c.SendMsg(reply)
+		return errors.New("event not found")
+	}
+	reply.Data.EventGenID = req.Data.EventGenID
+	c.SendMsg(reply)
+	// 然后下就是推送奖励
+	if eventInfo.Type == "normal" {
+		c.OnFinishNormalEvent(eventInfo, req.Data.Choice)
+	} else if eventInfo.Type == "select" {
+		c.OnFinishRandomEvent(eventInfo)
+	}
+	return
+}
+
+// OnFinishNormalEvent ...
+// TODO， 需要改成如果
+func (c *GameClient) OnFinishNormalEvent(eventInfo *message.EventInfo, choice int) {
+	taskEvent, ok := gameconf.AllTasks[eventInfo.EventID]
+	if !ok {
+		glog.Warning("OnFinishNormalEvent, taskEvent not found")
+		return
+	}
+	_ = taskEvent
+	// ok 得到一个普通事件
+
+	reward := taskEvent.Rewards[choice-1]
+	_ = reward
+
+	// // 无任何奖励， 则直接发送
+	if len(reward.List) == 0 {
+		return
+	}
+
+	var goodsIDs []string
+	var goodsCounts []int
+	for _, sw := range reward.List {
+		goodsIDs = append(goodsIDs, sw.GoodsID)
+		goodsCounts = append(goodsCounts, sw.GoodsNum)
+	}
+
+	updateInfos, err := c.PutToBagBatch(goodsIDs, goodsCounts)
+	if err != nil {
+		glog.Warning("c.PutToBagBatch failed, error: %s", err)
+	}
+	_ = updateInfos
+	notify := message.UpdateGoodsNotify{}
+	notify.Meta.MessageType = "UpdateGoodsNotify"
+	notify.Meta.MessageTypeID = message.MsgTypeUpdateGoodsNotify
+
+	notify.Data.List = updateInfos
+
+	err = gameredis.SaveBagInfo(c.UserID, c.bag)
+	if err != nil {
+		glog.Errorf("SaveBagInfo,  error : %s", err)
+		return
+	}
+	// 调试， 暂时不删
+	//	gameredis.DelEvent(c.UserID, eventInfo.GenID)
+	c.SendMsg(notify)
+}
+
+// PutToBagBatch ...
+func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos []message.GoodsUpdateInfo, err error) {
+	var goodsList []*gameconf.SuperGoods
+	var uniqueIDs []int64
+	var cellNumAtLeast int
+	var disallowPileupNum int
+	for _, goodsID := range goodsIDs {
+		goods, ok := gameconf.AllSuperGoods[goodsID]
+		if !ok {
+			glog.Warning("no such goods, goods id : %s", goods.ID)
+			return nil, errors.New("no such goods")
+		}
+		goodsList = append(goodsList, goods)
+		if goods.AllowPileup != 1 {
+			cellNumAtLeast++
+			disallowPileupNum++
+		} else {
+			// 如果允许重叠
+			_, ok := c.bag.Cells[goods.UniqueID]
+			if !ok {
+				cellNumAtLeast++
+			}
+		}
+	}
+
+	if cellNumAtLeast+len(c.bag.Cells) > 81 {
+		return nil, errors.New("insufficient cells")
+	}
+	_ = uniqueIDs
+
+	deltaMap := make(map[int64]*message.GoodsUpdateInfo)
+
+	for i, goods := range goodsList {
+		if goods.AllowPileup != 1 {
+			uniqueID := gameredis.GetGoodsUniqueID()
+			cell := &common.BagCell{}
+			cell.Count = goodsCounts[i]
+			cell.GoodsID = goodsIDs[i]
+			cell.UniqueID = goods.UniqueID
+			c.bag.Cells[uniqueID] = cell
+
+			gui := &message.GoodsUpdateInfo{}
+			gui.GoodsID = cell.GoodsID
+			gui.GoodsNum = goodsCounts[i] // actually, it is 1.
+			gui.GoodsNumDelta = goodsCounts[i]
+			gui.UniqueID = uniqueID
+			deltaMap[uniqueID] = gui
+		} else {
+			// 如果允许重叠
+			cell, ok := c.bag.Cells[goods.UniqueID]
+			if !ok {
+				cell = &common.BagCell{}
+				cell.Count = goodsCounts[i]
+				cell.GoodsID = goodsIDs[i]
+				cell.UniqueID = goods.UniqueID
+				c.bag.Cells[goods.UniqueID] = cell
+			} else {
+				cell.Count += goodsCounts[i]
+			}
+
+			gui, ok := deltaMap[goods.UniqueID]
+			if !ok {
+				// first time.
+				gui = &message.GoodsUpdateInfo{}
+				gui.GoodsID = cell.GoodsID
+				gui.GoodsNum = cell.Count
+				gui.GoodsNumDelta = goodsCounts[i]
+				deltaMap[goods.UniqueID] = gui
+
+			} else {
+				gui.GoodsNum = cell.Count
+				gui.GoodsNumDelta += goodsCounts[i]
+			}
+			gui.UniqueID = goods.UniqueID
+			_ = gui
+		}
+	}
+
+	for _, v := range deltaMap {
+		infos = append(infos, *v)
+	}
+	return
+}
+
+// OnFinishRandomEvent ...
+func (c *GameClient) OnFinishRandomEvent(eventInfo *message.EventInfo) {
+
 }
 
 // HandleCreateTaskReq ...
@@ -358,6 +533,18 @@ func (c *GameClient) AfterLogin() (err error) {
 		}
 		c.user = user
 	}
+
+	err = c.PushRoleInfo()
+	if err != nil {
+		return
+	}
+	return
+}
+
+// PushRoleInfo ...
+func (c *GameClient) PushRoleInfo() (err error) {
+	info := &message.GameBaseInfoNotify{}
+	_ = info
 	return
 }
 

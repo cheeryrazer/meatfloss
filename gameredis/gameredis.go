@@ -3,6 +3,7 @@ package gameredis
 import (
 	"encoding/json"
 	"fmt"
+	"meatfloss/common"
 	"meatfloss/gameuser"
 	"strconv"
 
@@ -118,6 +119,16 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 // TaskBox  *TaskBox
 // NewsBox  *NewsBox
 // EventBox *EventBox
+
+// SaveBagInfo ..
+func SaveBagInfo(userID int, bag *common.Bag) (err error) {
+	bagKey := "role:bag"
+	userIDStr := strconv.Itoa(userID)
+	bagData, _ := json.Marshal(bag)
+	bagStr := string(bagData)
+	_, err = redisClient.HSet(bagKey, userIDStr, bagStr).Result()
+	return
+}
 
 // LoadUser ...
 func LoadUser(userID int) *gameuser.User {
