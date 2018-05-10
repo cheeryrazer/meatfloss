@@ -73,6 +73,20 @@ type CreateTaskReq struct {
 	} `json:"data"`
 }
 
+// +++++++++++++
+
+// MsgTypeSaveClientLayoutReq ...
+// 创建任务
+const MsgTypeSaveClientLayoutReq int32 = 1400
+
+// SaveClientLayoutReq ...
+type SaveClientLayoutReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Layout ClientLayout `json:"layout"` // npcId 目前只有一个1
+	} `json:"data"`
+}
+
 // response
 //--------------------------------------------------------------
 
@@ -140,6 +154,18 @@ type CreateTaskReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		TaskID string `json:"taskId"`
+	} `json:"data"`
+}
+
+// MsgTypeSaveClientLayoutReply ...
+const MsgTypeSaveClientLayoutReply int32 = 2400
+
+// SaveClientLayoutReply ...
+// 创建一个任务的响应
+type SaveClientLayoutReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
 	} `json:"data"`
 }
 
@@ -314,4 +340,20 @@ type RunningTask struct {
 	TaskID   string //
 	CreateAt string
 	PreTime  int
+}
+
+// ClientLayout ...
+type ClientLayout struct {
+	Floor1 map[string]string
+	Floor2 map[string]string
+	Dress  map[string]string
+}
+
+// NewClientLayout ...
+func NewClientLayout() *ClientLayout {
+	layout := &ClientLayout{}
+	layout.Floor1 = make(map[string]string)
+	layout.Floor2 = make(map[string]string)
+	layout.Dress = make(map[string]string)
+	return layout
 }
