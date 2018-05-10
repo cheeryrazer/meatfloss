@@ -239,9 +239,46 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleCreateTaskReq(metaData, rawMsg)
 	case message.MsgTypeFinishEventReq:
 		return c.HandleFinishEventReq(metaData, rawMsg)
+	case message.MsgTypeSaveClientLayoutReq:
+		return c.HandleSaveClientLayoutReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+//HandleSaveClientLayoutReq  ...
+func (c *GameClient) HandleSaveClientLayoutReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	reply := &message.SaveClientLayoutReply{}
+	reply.Meta.MessageType = "SaveClientLayoutReply"
+	reply.Meta.MessageTypeID = message.MsgTypeSaveClientLayoutReply
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	fmt.Println("in SaveClientLayoutReply")
+
+	req := &message.SaveClientLayoutReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+
+	cpy := deepcopy.Copy(req.Data.Layout)
+	layout, _ := cpy.(*message.ClientLayout)
+	c.user.Layout = layout
+	c.persistLayout()
+	return
+}
+
+func (c *GameClient) persistLayout() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.Layout)
+	Layout, _ := cpy.(*message.ClientLayout)
+	newUser.Layout = Layout
+	persistent.AddUser(c.UserID, newUser)
 }
 
 // HandleFinishEventReq ...
@@ -582,6 +619,13 @@ func (c *GameClient) PushRoleInfo() (err error) {
 		cell.UniqueID = mycell.UniqueID
 		msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
 	}
+
+	{
+		cpy := deepcopy.Copy(c.user.Layout)
+		layout, _ := cpy.(*message.ClientLayout)
+		msg.Data.Layout = layout
+	}
+
 	// tasks
 	msg.Data.Tasks = make([]common.TaskInfo, 0)
 	for _, myTask := range c.user.TaskBox.Tasks {
@@ -592,6 +636,9 @@ func (c *GameClient) PushRoleInfo() (err error) {
 	for _, myEvent := range c.user.EventBox.Events {
 		msg.Data.Events = append(msg.Data.Events, *myEvent)
 	}
+
+	//layout
+
 	c.SendMsg(msg)
 	// var msgEvent = message.EventNotify{}
 	// msgEvent.Meta.MessageType = "EventNotify"

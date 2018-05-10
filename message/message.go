@@ -83,7 +83,7 @@ const MsgTypeSaveClientLayoutReq int32 = 1400
 type SaveClientLayoutReq struct {
 	MetaData ReqMetaData `json:"meta"`
 	Data     struct {
-		Layout ClientLayout `json:"layout"` // npcId 目前只有一个1
+		Layout *ClientLayout `json:"layout"` // npcId 目前只有一个1
 	} `json:"data"`
 }
 
@@ -233,6 +233,7 @@ type GameBaseInfoNotify struct {
 		Bag     RoleBag           `json:"bag"`
 		Tasks   []common.TaskInfo `json:"tasks"`
 		Events  []EventInfo       `json:"events"`
+		Layout  *ClientLayout     `json:"layout"`
 	} `json:"data"`
 }
 
@@ -345,9 +346,10 @@ type RunningTask struct {
 
 // ClientLayout ...
 type ClientLayout struct {
-	Floor1 map[string]string
-	Floor2 map[string]string
-	Dress  map[string]string
+	Floor1 map[string]string `json:"floor1"`
+	Floor2 map[string]string `json:"floor2"`
+	Floor3 map[string]string `json:"floor3"`
+	Dress  map[string]string `json:"dress"`
 }
 
 // NewClientLayout ...
@@ -355,6 +357,7 @@ func NewClientLayout() *ClientLayout {
 	layout := &ClientLayout{}
 	layout.Floor1 = make(map[string]string)
 	layout.Floor2 = make(map[string]string)
+	layout.Floor3 = make(map[string]string)
 	layout.Dress = make(map[string]string)
 	return layout
 }

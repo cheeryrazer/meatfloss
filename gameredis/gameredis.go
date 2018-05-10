@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"meatfloss/common"
 	"meatfloss/gameuser"
+	"meatfloss/message"
 	"strconv"
 
 	"meatfloss/config"
@@ -17,15 +18,6 @@ var (
 	// redisClient ...
 	redisClient *redis.Client
 )
-
-// GetRunningTask ...
-func GetRunningTask(userID int) (taskInfo string, err error) {
-	taskInfo, err = redisClient.HGet("runningTask", strconv.Itoa(userID)).Result()
-	if err == redis.Nil {
-		err = nil
-	}
-	return
-}
 
 // Initialize redis.
 func Initialize() {
@@ -106,6 +98,14 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		}
 	}
 
+	if user.Layout != nil {
+		data, err := json.Marshal(user.Layout)
+		if err == nil {
+			glog.Info(string(data))
+			fields["Layout"] = string(data)
+		}
+	}
+
 	_, err = redisClient.HMSet(key, fields).Result()
 	if err != nil {
 		glog.Warning("redisClient.HMSet failed, error: %s", err)
@@ -119,6 +119,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 // TaskBox  *TaskBox
 // NewsBox  *NewsBox
 // EventBox *EventBox
+// Layout    *Layout
 
 // SaveBagInfo ..
 func SaveBagInfo(userID int, bag *common.Bag) (err error) {
@@ -134,11 +135,12 @@ func SaveBagInfo(userID int, bag *common.Bag) (err error) {
 func LoadUser(userID int) *gameuser.User {
 	key := fmt.Sprintf("user:%d", userID)
 	result, err := redisClient.HMGet(key, []string{
-		"profile", // 0
-		"bag",     // 1
-		"taskbox", // 2
-		"newsbox", // 3
-		"eventbox"}...).Result()
+		"profile",  // 0
+		"bag",      // 1
+		"taskbox",  // 2
+		"newsbox",  // 3
+		"eventbox", //4
+		"Layout"}...).Result()
 	_ = err
 	_ = result
 	if err != nil {
@@ -225,6 +227,20 @@ func LoadUser(userID int) *gameuser.User {
 		}
 	}
 
+	// Layout
+	if result[5] != nil {
+		data, ok := result[5].(string)
+		if ok && data != "" {
+			obj := &message.ClientLayout{}
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.Layout = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+
 	if user.Profile == nil {
 		user.Profile = gameuser.NewProfile(userID)
 	}
@@ -245,6 +261,9 @@ func LoadUser(userID int) *gameuser.User {
 		user.EventBox = gameuser.NewEventBox(userID)
 	}
 
+	if user.Layout == nil {
+		user.Layout = message.NewClientLayout()
+	}
 	return user
 }
 

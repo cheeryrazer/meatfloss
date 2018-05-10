@@ -75,6 +75,10 @@ func AddUser(userID int, user *gameuser.User) {
 	if user.EventBox != nil {
 		oldUser.EventBox = user.EventBox
 	}
+
+	if user.Layout != nil {
+		oldUser.Layout = user.Layout
+	}
 }
 
 // LoadUser ...

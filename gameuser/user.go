@@ -2,6 +2,7 @@ package gameuser
 
 import (
 	"meatfloss/common"
+	"meatfloss/message"
 	"sync"
 )
 
@@ -14,6 +15,7 @@ type User struct {
 	TaskBox  *TaskBox
 	NewsBox  *NewsBox
 	EventBox *EventBox
+	Layout   *message.ClientLayout
 }
 
 // NewUser ...
@@ -21,9 +23,10 @@ func NewUser(userID int) (user *User) {
 	user = &User{}
 	user.UserID = userID
 	user.Profile = NewProfile(userID)
-	user.Bag = common.NewBag(userID)
+	user.Bag = common.NewBagWithInitialData(userID)
 	user.TaskBox = NewTaskBox(userID)
 	user.NewsBox = NewNewsBox(userID)
 	user.EventBox = NewEventBox(userID)
+	user.Layout = message.NewClientLayout()
 	return
 }
