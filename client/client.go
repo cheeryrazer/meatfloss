@@ -251,6 +251,7 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	if err != nil {
 		return
 	}
+
 	reply := &message.FinishEventReply{}
 	reply.Meta.MessageType = "FinishEventReply"
 	reply.Meta.MessageTypeID = message.MsgTypeFinishEventReply
@@ -555,64 +556,95 @@ func (c *GameClient) AfterLogin() (err error) {
 // PushRoleInfo ...
 func (c *GameClient) PushRoleInfo() (err error) {
 	// send base info.
-	{
-		info := &message.GameBaseInfoNotify{}
-		// copy profile.
-		info.Data.Profile = &message.RoleProfile{}
-		info.Data.Profile.UserID = c.UserID
-		info.Data.Profile.Experience = c.user.Profile.Experience
-		info.Data.Profile.Gender = c.user.Profile.Gender
-		info.Data.Profile.Intelligence = c.user.Profile.Intelligence
-		info.Data.Profile.Intimacy = c.user.Profile.Intimacy
-		info.Data.Profile.Level = c.user.Profile.Level
-		info.Data.Profile.Name = c.user.Profile.Name
-		info.Data.Profile.Spine = c.user.Profile.Spine
-		info.Data.Profile.Stamina = c.user.Profile.Stamina
 
-		// bag.
-		info.Data.Bag.Cells = make([]message.CellInfo, 0)
-		for _, mycell := range c.user.Bag.Cells {
-			cell := message.CellInfo{}
-			cell.Count = mycell.Count
-			cell.GoodsID = mycell.GoodsID
-			cell.UniqueID = mycell.UniqueID
-			info.Data.Bag.Cells = append(info.Data.Bag.Cells, cell)
-		}
+	msg := &message.GameBaseInfoNotify{}
+	msg.Meta.MessageType = "GameBaseInfoNotify"
+	msg.Meta.MessageTypeID = message.MsgTypeGameBaseInfoNotify
 
-		info.Meta.MessageType = "GameBaseInfoNotify"
-		info.Meta.MessageTypeID = message.MsgTypeGameBaseInfoNotify
-		c.SendMsg(info)
+	// copy profile.
+	msg.Data.Profile = &message.RoleProfile{}
+	msg.Data.Profile.UserID = c.UserID
+	msg.Data.Profile.Experience = c.user.Profile.Experience
+	msg.Data.Profile.Gender = c.user.Profile.Gender
+	msg.Data.Profile.Intelligence = c.user.Profile.Intelligence
+	msg.Data.Profile.Intimacy = c.user.Profile.Intimacy
+	msg.Data.Profile.Level = c.user.Profile.Level
+	msg.Data.Profile.Name = c.user.Profile.Name
+	msg.Data.Profile.Spine = c.user.Profile.Spine
+	msg.Data.Profile.Stamina = c.user.Profile.Stamina
+
+	// bag.
+	msg.Data.Bag.Cells = make([]message.CellInfo, 0)
+	for _, mycell := range c.user.Bag.Cells {
+		cell := message.CellInfo{}
+		cell.Count = mycell.Count
+		cell.GoodsID = mycell.GoodsID
+		cell.UniqueID = mycell.UniqueID
+		msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
 	}
-
-	// send events.
-	{
-
-		var msg = message.EventNotify{}
-		msg.Meta.MessageType = "EventNotify"
-		msg.Meta.MessageTypeID = message.MsgTypeEventNotify
-		msg.Data.Events = make([]*message.EventInfo, 0)
-		for _, myEvent := range c.user.EventBox.Events {
-			msg.Data.Events = append(msg.Data.Events, myEvent)
-
-		}
-		msg.Data.UserID = c.user.UserID
-		c.SendMsg(msg)
+	// tasks
+	msg.Data.Tasks = make([]common.TaskInfo, 0)
+	for _, myTask := range c.user.TaskBox.Tasks {
+		msg.Data.Tasks = append(msg.Data.Tasks, *myTask)
 	}
-
-	{
-
-		var msg = message.TaskNotify{}
-		msg.Meta.MessageType = "TaskNotify"
-		msg.Meta.MessageTypeID = message.MsgTypeTaskNotify
-		msg.Data.Tasks = make([]*common.TaskInfo, 0)
-
-		for _, myTask := range c.user.TaskBox.Tasks {
-			// 必要的时候, deepcopy一份
-			msg.Data.Tasks = append(msg.Data.Tasks, myTask)
-		}
-		msg.Data.UserID = c.user.UserID
-		c.SendMsg(msg)
+	// events
+	msg.Data.Events = make([]message.EventInfo, 0)
+	for _, myEvent := range c.user.EventBox.Events {
+		msg.Data.Events = append(msg.Data.Events, *myEvent)
 	}
+	c.SendMsg(msg)
+	// var msgEvent = message.EventNotify{}
+	// msgEvent.Meta.MessageType = "EventNotify"
+	// msgEvent.Meta.MessageTypeID = message.MsgTypeEventNotify
+	// msgEvent.Data.Events = make([]*message.EventInfo, 0)
+	// for _, myEvent := range c.user.EventBox.Events {
+	// 	msgEvent.Data.Events = append(msgEvent.Data.Events, myEvent)
+
+	// }
+	// msgEvent.Data.UserID = c.user.UserID
+	// c.SendMsg(msgEvent)
+	// //task
+	// var msgTask = message.TaskNotify{}
+	// msgTask.Meta.MessageType = "TaskNotify"
+	// msgTask.Meta.MessageTypeID = message.MsgTypeTaskNotify
+	// msgTask.Data.Tasks = make([]*common.TaskInfo, 0)
+
+	// for _, myTask := range c.user.TaskBox.Tasks {
+	// 	// 必要的时候, deepcopy一份
+	// 	msgTask.Data.Tasks = append(msgTask.Data.Tasks, myTask)
+	// }
+	// msgTask.Data.UserID = c.user.UserID
+	// c.SendMsg(msgTask)
+
+	// // send events.
+	// {
+
+	// 	var msg = message.EventNotify{}
+	// 	msg.Meta.MessageType = "EventNotify"
+	// 	msg.Meta.MessageTypeID = message.MsgTypeEventNotify
+	// 	msg.Data.Events = make([]*message.EventInfo, 0)
+	// 	for _, myEvent := range c.user.EventBox.Events {
+	// 		msg.Data.Events = append(msg.Data.Events, myEvent)
+
+	// 	}
+	// 	msg.Data.UserID = c.user.UserID
+	// 	c.SendMsg(msg)
+	// }
+
+	// {
+
+	// 	var msg = message.TaskNotify{}
+	// 	msg.Meta.MessageType = "TaskNotify"
+	// 	msg.Meta.MessageTypeID = message.MsgTypeTaskNotify
+	// 	msg.Data.Tasks = make([]*common.TaskInfo, 0)
+
+	// 	for _, myTask := range c.user.TaskBox.Tasks {
+	// 		// 必要的时候, deepcopy一份
+	// 		msg.Data.Tasks = append(msg.Data.Tasks, myTask)
+	// 	}
+	// 	msg.Data.UserID = c.user.UserID
+	// 	c.SendMsg(msg)
+	// }
 
 	return
 }
