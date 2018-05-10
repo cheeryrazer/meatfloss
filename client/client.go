@@ -268,6 +268,7 @@ func (c *GameClient) HandleSaveClientLayoutReq(metaData message.ReqMetaData, raw
 	layout, _ := cpy.(*message.ClientLayout)
 	c.user.Layout = layout
 	c.persistLayout()
+	c.SendMsg(reply)
 	return
 }
 
