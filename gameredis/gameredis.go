@@ -106,6 +106,29 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		}
 	}
 
+	if user.LoginTime != nil {
+		data, err := json.Marshal(user.LoginTime)
+		if err == nil {
+			glog.Info(string(data))
+			fields["LoginTime"] = string(data)
+		}
+	}
+
+	if user.GuajiOutputBox != nil {
+		data, err := json.Marshal(user.GuajiOutputBox)
+		if err == nil {
+			glog.Info(string(data))
+			fields["GuajiOutputBox"] = string(data)
+		}
+	}
+
+	if user.Guaji != nil {
+		data, err := json.Marshal(user.Guaji)
+		if err == nil {
+			fields["guaji"] = string(data)
+		}
+	}
+
 	_, err = redisClient.HMSet(key, fields).Result()
 	if err != nil {
 		glog.Warning("redisClient.HMSet failed, error: %s", err)
@@ -114,12 +137,15 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	return
 }
 
-// Profile  *Profile
-// Bag      *Bag
-// TaskBox  *TaskBox
-// NewsBox  *NewsBox
-// EventBox *EventBox
+// Profile   *Profile
+// Bag       *Bag
+// TaskBox   *TaskBox
+// NewsBox   *NewsBox
+// EventBox  *EventBox
 // Layout    *Layout
+// LoginTime *LoginTime
+// GuajiOutputBox  *GuajiOutputBox
+// Guajia  *Guajia
 
 // SaveBagInfo ..
 func SaveBagInfo(userID int, bag *common.Bag) (err error) {
@@ -135,12 +161,15 @@ func SaveBagInfo(userID int, bag *common.Bag) (err error) {
 func LoadUser(userID int) *gameuser.User {
 	key := fmt.Sprintf("user:%d", userID)
 	result, err := redisClient.HMGet(key, []string{
-		"profile",  // 0
-		"bag",      // 1
-		"taskbox",  // 2
-		"newsbox",  // 3
-		"eventbox", //4
-		"Layout"}...).Result()
+		"profile",        // 0
+		"bag",            // 1
+		"taskbox",        // 2
+		"newsbox",        // 3
+		"eventbox",       //4
+		"Layout",         //5
+		"LoginTime",      //6
+		"GuajiOutputBox", //7
+		"Guaji"}...).Result()
 	_ = err
 	_ = result
 	if err != nil {
@@ -240,6 +269,46 @@ func LoadUser(userID int) *gameuser.User {
 			}
 		}
 	}
+	// LoginTime
+	if result[6] != nil {
+		data, ok := result[6].(string)
+		if ok && data != "" {
+			obj := &gameuser.LoginTime{}
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.LoginTime = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+
+	//GuajiOutputBox
+	if result[7] != nil {
+		data, ok := result[7].(string)
+		if ok && data != "" {
+			obj := gameuser.NewGuajiOutputBox(userID)
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.GuajiOutputBox = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+	//Guaji
+	if result[8] != nil {
+		data, ok := result[8].(string)
+		if ok && data != "" {
+			obj := &gameuser.Guaji{}
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.Guaji = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
 
 	if user.Profile == nil {
 		user.Profile = gameuser.NewProfile(userID)
@@ -264,6 +333,19 @@ func LoadUser(userID int) *gameuser.User {
 	if user.Layout == nil {
 		user.Layout = message.NewClientLayout()
 	}
+
+	if user.LoginTime == nil {
+		user.LoginTime = gameuser.NewLoginTime(userID)
+	}
+
+	if user.GuajiOutputBox == nil {
+		user.GuajiOutputBox = gameuser.NewGuajiOutputBox(userID)
+	}
+
+	if user.Guaji == nil {
+		user.Guaji = gameuser.NewGuaji(userID)
+	}
+
 	return user
 }
 

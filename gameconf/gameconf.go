@@ -1,11 +1,11 @@
 package gameconf
 
 import (
+	"encoding/json"
+	"fmt"
 	"meatfloss/db"
 	"meatfloss/message"
 	"meatfloss/utils"
-	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -29,6 +29,10 @@ var (
 	AllRandomEvents map[string]*RandomEvent
 	// AllNPCGuests ...
 	AllNPCGuests map[string]*NPCGuest
+	// AllGuajis ...
+	AllGuajis map[string]*Guaji
+	// AllEmployees ...
+	AllEmployees map[string]*Employee
 )
 
 func init() {
@@ -40,6 +44,8 @@ func init() {
 	AllTasks = make(map[string]*Task)
 	AllRandomEvents = make(map[string]*RandomEvent)
 	AllNPCGuests = make(map[string]*NPCGuest)
+	AllGuajis = make(map[string]*Guaji)
+	AllEmployees = make(map[string]*Employee)
 
 }
 
@@ -84,6 +90,9 @@ func LoadFromDatabase() (err error) {
 	loadNPCGuest()
 	// 这个放在最后
 	loadSuperGoods()
+	loadGuaji()
+	loadGuaji()
+	loadEmployee()
 	return
 }
 
@@ -272,6 +281,7 @@ func loadTasks() (err error) {
 			row.Exp3,
 			row.PreTime,
 			row.PostTime,
+
 			make([]string, 3),
 			make([]message.Reward, 3)}
 
@@ -601,5 +611,150 @@ func loadNPCGuest() (err error) {
 		AllNPCGuests[guest.ID] = guest
 	}
 	utils.PrintJSON(AllNPCGuests)
+	return
+}
+
+// Guaji ...
+type Guaji struct {
+	Number              string // 编号
+	MachineLevel        int    // 机器等级
+	MinLevel            int    // 需要等级
+	Speed               int    // 速度
+	Quality             int    // 质量
+	Luck                int    // 运气
+	InitialTemperature  int    // 初始温度
+	MaxTemperature      int    // 最高温度
+	CDPerDegree         int    // 每度冷却时间（s)
+	CD                  int    // 冷却时间
+	TemperaturePerClick int    // 每次点击温度
+	MachineImage        string // 机器图片
+	NumEmployees        int    // 可雇佣数
+	PositiveOutput      string // 正向事件产出
+	Probability1        int    //触发概率1
+	OppositeOutput      string // 负向事件产出
+	Probability2        int    // 触发概率2
+	ClickOutput         string // 每次点击产出
+	CritProbability     int    // 暴击概率
+	CritOutput          string // 暴击产出
+	Upmaterial          string // 升级材料
+	Uptime              int    // 升级时间
+	Outputs             []message.Reward
+	Guajis              []message.Guaji
+}
+
+func loadGuaji() (err error) {
+
+	dbGuaji, err := db.LoadGuajiConf()
+	if err != nil {
+		return
+	}
+	for _, row := range dbGuaji {
+		obj := &Guaji{
+			Number:              row.ID,
+			MachineLevel:        row.Jqlv,
+			MinLevel:            row.Lv,
+			Speed:               row.Sudu,
+			Quality:             row.Zhiliang,
+			Luck:                row.Yunqi,
+			InitialTemperature:  row.Cswd,
+			MaxTemperature:      row.Zgwd,
+			CDPerDegree:         row.Mmlq,
+			CD:                  row.Cd,
+			TemperaturePerClick: row.Mcdj,
+			MachineImage:        row.Tupian,
+			NumEmployees:        row.Glnpc,
+			PositiveOutput:      row.Zhengxiang,
+			Probability1:        row.Gailv1,
+			OppositeOutput:      row.Fuxiang,
+			Probability2:        row.Gailv2,
+			ClickOutput:         row.Djcc,
+			CritProbability:     row.Bjgl,
+			CritOutput:          row.Bjcc,
+			Upmaterial:          row.Sjcl,
+			Uptime:              row.Time,
+			Outputs:             make([]message.Reward, 3),
+			Guajis:              make([]message.Guaji, 2)}
+		guajiStrList := []string{row.Zhengxiang, row.Fuxiang, row.Bjcc}
+		expList := []int{row.Gailv1, row.Gailv2, row.Bjgl}
+		for i, str := range guajiStrList {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneReward := message.Reward{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleReward{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneReward.List = append(oneReward.List, sw)
+						}
+					}
+				}
+			}
+			oneReward.Exp = expList[i]
+			obj.Outputs[i] = oneReward
+		}
+
+		guajiStrListSingle := []string{row.Djcc, row.Sjcl}
+		for i, str := range guajiStrListSingle {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneGuaji := message.Guaji{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleGuaji{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneGuaji.List = append(oneGuaji.List, sw)
+						}
+					}
+				}
+			}
+			obj.Guajis[i] = oneGuaji
+		}
+		AllGuajis[obj.Number] = obj
+	}
+	utils.PrintJSON(AllGuajis)
+	return
+}
+
+// Employee ...
+type Employee struct {
+	Number       string // 编号
+	AvatarImage  string // 头像图片
+	EmployeeName string // 雇员名字
+	Speed        int    // 速度
+	Quality      int    // 质量
+	Luck         int    // 运气
+	Introdution  string // 介绍
+}
+
+func loadEmployee() (err error) {
+
+	dbEmployee, err := db.LoadEmployee()
+	if err != nil {
+		return
+	}
+	for _, row := range dbEmployee {
+		employee := &Employee{
+			Number:       row.ID,
+			AvatarImage:  row.Tupian,
+			EmployeeName: row.Name,
+			Speed:        row.Sudu,
+			Quality:      row.Zhiliang,
+			Luck:         row.Yunqi,
+			Introdution:  row.Jieshao}
+		AllEmployees[employee.Number] = employee
+	}
+	utils.PrintJSON(AllEmployees)
 	return
 }

@@ -497,3 +497,99 @@ func LoadFurnitureConf() ([]*Furniture, error) {
 
 	return res, nil
 }
+
+// Guaji represents a row from 'meatfloss.tbl_guaji'.
+type Guaji struct {
+	ID         string `json:"id"`         // id
+	Jqlv       int    `json:"jqlv"`       // jqlv
+	Lv         int    `json:"lv"`         // lv
+	Sudu       int    `json:"sudu"`       // sudu
+	Zhiliang   int    `json:"zhiliang"`   // zhiliang
+	Yunqi      int    `json:"yunqi"`      // yunqi
+	Cswd       int    `json:"cswd"`       // cswd
+	Zgwd       int    `json:"zgwd"`       // zgwd
+	Mmlq       int    `json:"mmlq"`       // mmlq
+	Cd         int    `json:"cd"`         // cd
+	Mcdj       int    `json:"mcdj"`       // mcdj
+	Tupian     string `json:"tupian"`     // tupian
+	Glnpc      int    `json:"glnpc"`      // glnpc
+	Zhengxiang string `json:"zhengxiang"` // zhengxiang
+	Gailv1     int    `json:"gailv1"`     // gailv1
+	Fuxiang    string `json:"fuxiang"`    // fuxiang
+	Gailv2     int    `json:"gailv2"`     // gailv2
+	Djcc       string `json:"djcc"`       // djcc
+	Bjgl       int    `json:"bjgl"`       // bjgl
+	Bjcc       string `json:"bjcc"`       // bjcc
+	Sjcl       string `json:"sjcl"`       // sjcl
+	Time       int    `json:"time"`       // time
+}
+
+// LoadGuajiConf ...
+func LoadGuajiConf() ([]*Guaji, error) {
+	sqlstr := `SELECT ` +
+		`id, jqlv, lv, sudu, zhiliang, yunqi, cswd, zgwd, mmlq, cd, mcdj, tupian, glnpc, zhengxiang, gailv1, fuxiang, gailv2, djcc, bjgl, bjcc, sjcl, time` +
+		` FROM ` + defaultDbName + `.tbl_guaji`
+	fmt.Println(sqlstr)
+	q, err := db.Query(sqlstr)
+
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*Guaji
+	for q.Next() {
+		tg := Guaji{}
+
+		// scan
+		err = q.Scan(&tg.ID, &tg.Jqlv, &tg.Lv, &tg.Sudu, &tg.Zhiliang, &tg.Yunqi, &tg.Cswd, &tg.Zgwd, &tg.Mmlq, &tg.Cd, &tg.Mcdj, &tg.Tupian, &tg.Glnpc, &tg.Zhengxiang, &tg.Gailv1, &tg.Fuxiang, &tg.Gailv2, &tg.Djcc, &tg.Bjgl, &tg.Bjcc, &tg.Sjcl, &tg.Time)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &tg)
+	}
+
+	return res, nil
+}
+
+// TblEmployee represents a row from 'meatfloss.tbl_employee'.
+type TblEmployee struct {
+	ID       string `json:"id"`       // id
+	Tupian   string `json:"tupian"`   // tupian
+	Name     string `json:"name"`     // name
+	Sudu     int    `json:"sudu"`     // sudu
+	Zhiliang int    `json:"zhiliang"` // zhiliang
+	Yunqi    int    `json:"yunqi"`    // yunqi
+	Jieshao  string `json:"jieshao"`  // jieshao
+}
+
+// LoadEmployee ...
+func LoadEmployee() ([]*TblEmployee, error) {
+	sqlstr := `SELECT ` +
+		`id, tupian, name, sudu, zhiliang, yunqi, jieshao` +
+		` FROM ` + defaultDbName + `.tbl_employee`
+
+	q, err := db.Query(sqlstr)
+	if err != nil {
+		return nil, err
+	}
+	defer q.Close()
+
+	// load results
+	var res []*TblEmployee
+	for q.Next() {
+		te := TblEmployee{}
+
+		// scan
+		err = q.Scan(&te.ID, &te.Tupian, &te.Name, &te.Sudu, &te.Zhiliang, &te.Yunqi, &te.Jieshao)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &te)
+	}
+
+	return res, nil
+}

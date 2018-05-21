@@ -104,3 +104,12 @@ type TaskInfo struct {
 	NPCID     string
 	Time      string
 }
+
+// GuajiOutputInfo ...
+type GuajiOutputInfo struct {
+	UserID int    // 用户的id
+	Name   string //用户的名字
+	Type   string //产出的类型 z正向 f反向 n没有
+	Time   string //产出时间
+	Items  string //产出的物品
+}

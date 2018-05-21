@@ -1,6 +1,8 @@
 package message
 
-import "meatfloss/common"
+import (
+	"meatfloss/common"
+)
 
 // ReqMetaData ...
 type ReqMetaData struct {
@@ -26,6 +28,19 @@ type LoginReq struct {
 		Source  string `json:"source"`
 		Account string `json:"account"`
 		Token   string `json:"token"`
+	} `json:"data"`
+}
+
+// MsgTypeOutputReq ...
+// 产出信息的请求
+const MsgTypeOutputReq int32 = 2100
+
+// OutputReq ...
+// 前段用户的获取产出的信息
+type OutputReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		OUTPUT string `json:"outPut"` // npcId 目前只有一个1
 	} `json:"data"`
 }
 
@@ -108,6 +123,21 @@ const MsgTypeLoginReply int32 = 2000
 // LoginReply ...
 //  登录的响应
 type LoginReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeOutputReply ...
+// 产出报告请求
+const MsgTypeOutputReply int32 = 5000
+
+// OutPutReply ...
+//  产出报告的响应
+type OutPutReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Dummy string `json:"dummy"`
@@ -261,6 +291,19 @@ type TaskNotify struct {
 	} `json:"data"`
 }
 
+// MsgTypeOutputNotify ...
+const MsgTypeOutputNotify int32 = 3500
+
+// OutputNotify ...
+//  结算信息的推送
+type OutputNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		//	Outputs []*common.OutputInfo `json:"outputs"`
+		GuajiOutputs []common.GuajiOutputInfo `json:"outputs"`
+	} `json:"data"`
+}
+
 // common structs
 // 下面的都是子结构体
 //--------------------------------------------------------------
@@ -295,6 +338,33 @@ type RoleProfile struct {
 	Intimacy     int    `json:"intimacy"`
 	Stamina      int    `json:"stamina"`
 	Experience   int    `json:"experience"`
+}
+
+// RoleGuaji ...
+type RoleGuaji struct {
+	UserID              int    //用户的ID
+	Number              string // 编号
+	MachineLevel        int    // 机器等级
+	MinLevel            int    // 需要等级
+	Speed               int    // 速度
+	Quality             int    // 质量
+	Luck                int    // 运气
+	InitialTemperature  int    // 初始温度
+	MaxTemperature      int    // 最高温度
+	CDPerDegree         int    // 每度冷却时间（s)
+	CD                  int    // 冷却时间
+	TemperaturePerClick int    // 每次点击温度
+	MachineImage        string // 机器图片
+	NumEmployees        int    // 可雇佣数
+	PositiveOutput      string // 正向事件产出
+	Probability1        int    //触发概率1
+	OppositeOutput      string // 负向事件产出
+	Probability2        int    // 触发概率2
+	ClickOutput         string // 每次点击产出
+	CritProbability     int    // 暴击概率
+	CritOutput          string // 暴击产出
+	Upmaterial          string // 升级材料
+	Uptime              int    // 升级时间
 }
 
 // ArticleInfo ...
@@ -360,4 +430,15 @@ func NewClientLayout() *ClientLayout {
 	layout.Floor3 = make(map[string]string)
 	layout.Dress = make(map[string]string)
 	return layout
+}
+
+// SingleGuaji ...
+type SingleGuaji struct {
+	GoodsID  string `json:"goodsId"`
+	GoodsNum int    `json:"goodsNum"`
+}
+
+// Guaji ...
+type Guaji struct {
+	List []SingleGuaji `json:"list"`
 }

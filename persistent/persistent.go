@@ -79,7 +79,35 @@ func AddUser(userID int, user *gameuser.User) {
 	if user.Layout != nil {
 		oldUser.Layout = user.Layout
 	}
+
+	if user.LoginTime != nil {
+		oldUser.LoginTime = user.LoginTime
+	}
+
+	if user.GuajiOutputBox != nil {
+		oldUser.GuajiOutputBox = user.GuajiOutputBox
+	}
+
+	if user.Guaji != nil {
+		oldUser.Guaji = user.Guaji
+	}
 }
+
+// // GetUser ...
+// func GetUser(userID int, name string) {
+// 	lock.Lock()
+// 	defer lock.Unlock()
+// 	user := &gameuser.User{}
+// 	oldUser, ok := changedUsers[userID]
+// 	if !ok {
+// 		changedUsers[userID] = user
+// 		return
+// 	}
+// 	if name == "OutputBox" {
+// 		return oldUser.OutputBox.Outputs
+// 	}
+
+// }
 
 // LoadUser ...
 func LoadUser(userID int) (user *gameuser.User) {

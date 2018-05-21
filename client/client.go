@@ -55,7 +55,7 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	go c.HandleRead()
 	go c.HandleWrite()
 	go c.HandleHelper()
-
+	go c.HandleHelperGuaji()
 	if c.UserID != 0 {
 		Mgr.onLogout(c)
 	}
@@ -86,6 +86,25 @@ func (c *GameClient) HandleHelper() {
 	c.waitGroup.Done()
 }
 
+// HandleHelperGuaji ...
+func (c *GameClient) HandleHelperGuaji() {
+	for {
+		exit := false
+		select {
+		case <-c.helperChan:
+			exit = true
+			break
+		case <-time.After(time.Second * 10):
+			c.onPeriodGuaji()
+		}
+		if exit {
+			break
+		}
+	}
+	glog.Info("HandleHelperGuaji exit")
+	c.waitGroup.Done()
+}
+
 func (c *GameClient) onPeriod() {
 	c.lock.Lock()
 	if c.UserID != 0 {
@@ -94,10 +113,44 @@ func (c *GameClient) onPeriod() {
 	c.lock.Unlock()
 }
 
-func (c *GameClient) periodCheck() {
-	c.checkTasks()
+func (c *GameClient) onPeriodGuaji() {
+	c.lock.Lock()
+	if c.UserID != 0 {
+		c.periodCheckGuaji()
+	}
+	c.lock.Unlock()
+}
+func (c *GameClient) periodCheckGuaji() {
+	c.checkGuajiOutput()
 }
 
+func (c *GameClient) periodCheck() {
+	c.checkTasks()
+
+}
+
+func (c *GameClient) checkGuajiOutput() {
+	fmt.Println("你好吗")
+
+	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
+
+	if size == 5 {
+		for i := 0; i < size-1; i++ {
+			//arr[base] = c.user.GuajiOutputBox.GuajiOutputs[i].Items
+			c.user.GuajiOutputBox.GuajiOutputs[i] = c.user.GuajiOutputBox.GuajiOutputs[i+1]
+		}
+		c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs[:4], c.user.GuajiOutputBox.GuajiOutputs[5:]...)
+	}
+	oneEvent := &common.GuajiOutputInfo{}
+	oneEvent.UserID = c.user.UserID
+	oneEvent.Type = "z"
+	oneEvent.Name = "小明"
+	oneEvent.Items = "你好"
+	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
+	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
+	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+	c.persistOutput()
+}
 func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
 		return
@@ -241,9 +294,49 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleFinishEventReq(metaData, rawMsg)
 	case message.MsgTypeSaveClientLayoutReq:
 		return c.HandleSaveClientLayoutReq(metaData, rawMsg)
+	case message.MsgTypeOutputReq:
+		return c.HandleOutputReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+//回复前端的信息
+//HandleOutputReq  ...
+func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.OutputNotify{}
+	reply.Meta.MessageType = "OutputNotify"
+	reply.Meta.MessageTypeID = message.MsgTypeOutputNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	if len(c.user.GuajiOutputBox.GuajiOutputs) == 0 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "GuajiOutputs don't exits"
+		c.SendMsg(reply)
+		return
+	}
+	//消息的推送
+	//Events: = make([]common.EventInfo, 0)
+	reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, len(c.user.GuajiOutputBox.GuajiOutputs))
+	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+	for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
+		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
+	}
+	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+	c.SendMsg(reply)
+
+	return
+}
+
+func (c *GameClient) persistOutput() {
+	newOutput := &gameuser.User{}
+	newOutput.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.GuajiOutputBox)
+	output, _ := cpy.(*gameuser.GuajiOutputBox)
+	newOutput.GuajiOutputBox = output
+	persistent.AddUser(c.UserID, newOutput)
 }
 
 //HandleSaveClientLayoutReq  ...
@@ -263,7 +356,6 @@ func (c *GameClient) HandleSaveClientLayoutReq(metaData message.ReqMetaData, raw
 		c.SendMsg(reply)
 		return
 	}
-
 	cpy := deepcopy.Copy(req.Data.Layout)
 	layout, _ := cpy.(*message.ClientLayout)
 	c.user.Layout = layout
@@ -506,7 +598,6 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 	c.user.TaskBox.Tasks = append(c.user.TaskBox.Tasks, newTaskInfo)
 	c.persistTaskBox()
 	reply.Data.TaskID = strconv.FormatInt(newTaskInfo.ID, 10)
-
 	c.SendMsg(reply)
 	return
 }
@@ -562,7 +653,19 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
 	err = c.AfterLogin()
+	c.persistLoginTime()
+	fmt.Println(c.UserID)
+	fmt.Println("小花花花花花花花花")
 	return
+}
+
+func (c *GameClient) persistLoginTime() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+	cpy := deepcopy.Copy(c.user.LoginTime)
+	logintime, _ := cpy.(*gameuser.LoginTime)
+	newUser.LoginTime = logintime
+	persistent.AddUser(c.UserID, newUser)
 }
 
 // HandleTimeout ... true ignore error, otherwise not.
@@ -583,11 +686,22 @@ func (c *GameClient) AfterLogin() (err error) {
 		}
 		c.user = user
 	}
-
+	//send message
 	err = c.PushRoleInfo()
 	if err != nil {
 		return
 	}
+	//数据本地化
+	err = c.DownLocalizationInfo()
+	if err != nil {
+		return
+	}
+	return
+}
+
+// DownLocalizationInfo ...
+func (c *GameClient) DownLocalizationInfo() (err error) {
+
 	return
 }
 
