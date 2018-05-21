@@ -1,7 +1,7 @@
 package gameuser
 
-// Guaji ...
-type Guaji struct {
+// GuajiSettlement ...
+type GuajiSettlement struct {
 	UserID              int    //用户的ID
 	Number              string // 编号
 	MachineLevel        int    // 机器等级
@@ -27,9 +27,9 @@ type Guaji struct {
 	Uptime              int    // 升级时间
 }
 
-// NewGuaji ...
-func NewGuaji(userID int) (guaji *Guaji) {
-	guaji = &Guaji{}
+// NewGuajiSettlement ...
+func NewGuajiSettlement(userID int) (guaji *GuajiSettlement) {
+	guaji = &GuajiSettlement{}
 	guaji.UserID = userID
 	return
 }

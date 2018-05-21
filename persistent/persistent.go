@@ -88,9 +88,14 @@ func AddUser(userID int, user *gameuser.User) {
 		oldUser.GuajiOutputBox = user.GuajiOutputBox
 	}
 
-	if user.Guaji != nil {
-		oldUser.Guaji = user.Guaji
+	if user.GuajiSettlement != nil {
+		oldUser.GuajiSettlement = user.GuajiSettlement
 	}
+
+	if user.GuajiProfile != nil {
+		oldUser.GuajiProfile = user.GuajiProfile
+	}
+
 }
 
 // // GetUser ...

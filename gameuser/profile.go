@@ -17,5 +17,6 @@ type Profile struct {
 func NewProfile(userID int) (profile *Profile) {
 	profile = &Profile{}
 	profile.UserID = userID
+	profile.Level = 1
 	return
 }

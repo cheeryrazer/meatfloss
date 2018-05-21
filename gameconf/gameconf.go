@@ -30,7 +30,7 @@ var (
 	// AllNPCGuests ...
 	AllNPCGuests map[string]*NPCGuest
 	// AllGuajis ...
-	AllGuajis map[string]*Guaji
+	AllGuajis map[int]*Guaji
 	// AllEmployees ...
 	AllEmployees map[string]*Employee
 )
@@ -44,7 +44,7 @@ func init() {
 	AllTasks = make(map[string]*Task)
 	AllRandomEvents = make(map[string]*RandomEvent)
 	AllNPCGuests = make(map[string]*NPCGuest)
-	AllGuajis = make(map[string]*Guaji)
+	AllGuajis = make(map[int]*Guaji)
 	AllEmployees = make(map[string]*Employee)
 
 }
@@ -721,7 +721,7 @@ func loadGuaji() (err error) {
 			}
 			obj.Guajis[i] = oneGuaji
 		}
-		AllGuajis[obj.Number] = obj
+		AllGuajis[obj.MachineLevel] = obj
 	}
 	utils.PrintJSON(AllGuajis)
 	return

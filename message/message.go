@@ -340,8 +340,8 @@ type RoleProfile struct {
 	Experience   int    `json:"experience"`
 }
 
-// RoleGuaji ...
-type RoleGuaji struct {
+// RoleGuajiSettlement ...
+type RoleGuajiSettlement struct {
 	UserID              int    //用户的ID
 	Number              string // 编号
 	MachineLevel        int    // 机器等级
@@ -365,6 +365,12 @@ type RoleGuaji struct {
 	CritOutput          string // 暴击产出
 	Upmaterial          string // 升级材料
 	Uptime              int    // 升级时间
+}
+
+// RoleGuajiProfile ...
+type RoleGuajiProfile struct {
+	UserID    int    //用户的ID
+	Employees string // 雇员
 }
 
 // ArticleInfo ...

@@ -132,11 +132,13 @@ func (c *GameClient) periodCheck() {
 func (c *GameClient) checkGuajiOutput() {
 	fmt.Println("你好吗")
 
-	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
+	//取出机器的配置的信息
 
+	// machine:=&
+
+	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
 	if size == 5 {
 		for i := 0; i < size-1; i++ {
-			//arr[base] = c.user.GuajiOutputBox.GuajiOutputs[i].Items
 			c.user.GuajiOutputBox.GuajiOutputs[i] = c.user.GuajiOutputBox.GuajiOutputs[i+1]
 		}
 		c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs[:4], c.user.GuajiOutputBox.GuajiOutputs[5:]...)
