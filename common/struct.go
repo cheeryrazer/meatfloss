@@ -91,6 +91,22 @@ func NewBagWithInitialData(userID int) *Bag {
 		bag.Cells[cell.UniqueID] = cell
 	}
 
+	{
+		cell := &BagCell{}
+		cell.Count = 1
+		cell.GoodsID = "jj0001"
+		cell.UniqueID = 300000 + 1
+		bag.Cells[cell.UniqueID] = cell
+	}
+
+	{
+		cell := &BagCell{}
+		cell.Count = 1
+		cell.GoodsID = "jj0002"
+		cell.UniqueID = 300000 + 2
+		bag.Cells[cell.UniqueID] = cell
+	}
+
 	return bag
 }
 
