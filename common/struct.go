@@ -129,3 +129,8 @@ type GuajiOutputInfo struct {
 	Time   string //产出时间
 	Items  string //产出的物品
 }
+
+// EmployeesInfo ...
+type EmployeesInfo struct {
+	EmployeesID string // 雇员的ID
+}

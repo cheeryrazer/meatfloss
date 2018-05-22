@@ -51,7 +51,7 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.helperChan = make(chan bool, 1)
 
 	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
-	c.waitGroup.Add(3)
+	c.waitGroup.Add(4)
 	go c.HandleRead()
 	go c.HandleWrite()
 	go c.HandleHelper()
@@ -130,11 +130,79 @@ func (c *GameClient) periodCheck() {
 }
 
 func (c *GameClient) checkGuajiOutput() {
+
+	//取出当前的等级
+	userProfile := &gameuser.Profile{}
+	userProfile.Level = 1
+	fmt.Print(userProfile.Level)
+	//根据等级取出当前的机器的结算数据
+	machine := gameconf.AllGuajis
+	fmt.Print(machine[userProfile.Level].Number)
+
+	machineInfo := machine[userProfile.Level]
+	//判断雇员的索引是为空，不为空的话，查出雇员的信息
+	//算出一个随机的值作为token
+	//随机数
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
+	string := strconv.Itoa(r.Intn(10000))
+	str := "token" + string
+
+	employer := c.user.GuajiProfile.EmployeeBox
+
+	onet := &common.EmployeesInfo{}
+	onet.EmployeesID = "gy001"
+	num := len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	fmt.Println(num)
+	if num == 0 {
+		c.user.GuajiProfile.EmployeeBox.EmployeesToken = str
+		c.user.GuajiProfile.EmployeeBox.EmployeesInfo = append(c.user.GuajiProfile.EmployeeBox.EmployeesInfo, onet)
+	}
+
+	fmt.Println(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	//通过匹配等级和雇员的token值判定是否需要更新计算的产出的参数
+	guajisettlement := c.user.GuajiSettlement
+	//guajisettlement.MinLevel
+	EmployeeInfo := gameconf.AllEmployees
 	fmt.Println("你好吗")
 
-	//取出机器的配置的信息
+	fmt.Println(employer.EmployeesToken)
+	fmt.Println("我不好")
+	if employer.EmployeesToken != guajisettlement.SettlementToken || guajisettlement.MachineLevel != userProfile.Level {
+		//更新需要计算的数据
+		//如果雇员的数量大于0，循环计算出雇员的计算值
+		fmt.Println("1111")
+		fmt.Println(len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo))
+		fmt.Println(employer.EmployeesToken)
+		fmt.Println(guajisettlement.SettlementToken)
+		fmt.Println(guajisettlement.MachineLevel)
+		fmt.Println(userProfile.Level)
+		fmt.Println("222")
+		guajisettlement.Luck += machineInfo.Luck
+		guajisettlement.MachineLevel = userProfile.Level
+		guajisettlement.Quality += machineInfo.Quality
+		guajisettlement.SettlementToken = employer.EmployeesToken
+		guajisettlement.Speed += machineInfo.Speed
+		guajisettlement.OppositeOutput = machineInfo.OppositeOutput
+		guajisettlement.PositiveOutput = machineInfo.PositiveOutput
+		guajisettlement.Probability1 = machineInfo.Probability1
+		guajisettlement.Probability2 = machineInfo.Probability2
+		if len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo) > 0 {
+			guajisettlement.SettlementToken = employer.EmployeesToken
+			for _, myEmployer := range c.user.GuajiProfile.EmployeeBox.EmployeesInfo {
+				guajisettlement.Luck += EmployeeInfo[myEmployer.EmployeesID].Luck
+				guajisettlement.Quality += EmployeeInfo[myEmployer.EmployeesID].Quality
+				guajisettlement.Speed += EmployeeInfo[myEmployer.EmployeesID].Speed
+			}
+		}
+	}
+	fmt.Println("开始了")
+	fmt.Println(guajisettlement.Luck)
+	fmt.Println(guajisettlement.Quality)
+	fmt.Println(guajisettlement.Speed)
+	fmt.Println("结束了")
 
-	// machine:=&
+	//根据guajisettlement来计算产出
 
 	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
 	if size == 5 {
@@ -151,7 +219,7 @@ func (c *GameClient) checkGuajiOutput() {
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
-	c.persistOutput()
+	//c.persistOutput()
 }
 func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
