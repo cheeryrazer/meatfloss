@@ -136,3 +136,7 @@ type ClickOutputInfo struct {
 	Time   int  //产出时间
 	GoodID string  //产出物品
 }
+// EmployeesInfo ...
+type EmployeesInfo struct {  
+	EmployeesID string // 雇员的ID
+}

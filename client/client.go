@@ -49,7 +49,6 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.replyChan = make(chan interface{}, 128)
 	c.KickOffChan = make(chan bool, 1)
 	c.helperChan = make(chan bool, 1)
-
 	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
 	c.waitGroup.Add(4)
 	go c.HandleRead()
@@ -75,8 +74,9 @@ func (c *GameClient) HandleHelper() {
 		case <-c.helperChan:
 			exit = true
 			break
-		case <-time.After(time.Second * 5):
+		case <-time.After(time.Second * 1):
 			c.onPeriod()
+
 		}
 		if exit {
 			break
@@ -130,14 +130,61 @@ func (c *GameClient) periodCheck() {
 }
 
 func (c *GameClient) checkGuajiOutput() {
-	fmt.Println("你好吗")
 
-	//取出机器的配置的信息
+	//取出最后的一条产出的记录，根据时间判断是否进行产出的结算
+	// outPut := c.user.GuajiOutputBox.GuajiOutputs
+	// fmt.Println("我是长度")
+	// fmt.Println(len(outPut))
 
-	goods := gameconf.AllGoods
+	// fmt.Println(outPut[4].Time)
 
-	fmt.Println(goods["wp0001"])
-	// fmt.Println("111")
+	//取出当前的等级
+	userProfile := c.user.Profile
+	//根据等级取出当前的机器的结算数据
+	machine := gameconf.AllGuajis
+	machineInfo := machine[userProfile.Level]
+	//判断雇员的索引是为空，不为空的话，查出雇员的信息
+	employer := c.user.GuajiProfile.EmployeeBox
+	//算出一个随机的值作为token
+	//随机数
+	// r := rand.New(rand.NewSource(time.Now().Unix()))
+	// fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
+	// string := strconv.Itoa(r.Intn(10000))
+	// str := "token" + string
+	// onet := &common.EmployeesInfo{}
+	// onet.EmployeesID = "gy001"
+	// num := len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	// fmt.Println(num)
+	// if num == 0 {
+	// 	c.user.GuajiProfile.EmployeeBox.EmployeesToken = str
+	// 	c.user.GuajiProfile.EmployeeBox.EmployeesInfo = append(c.user.GuajiProfile.EmployeeBox.EmployeesInfo, onet)
+	// }
+	//通过匹配等级和雇员的token值判定是否需要更新计算的产出的参数
+	guajisettlement := c.user.GuajiSettlement
+	//guajisettlement.MinLevel
+	EmployeeInfo := gameconf.AllEmployees
+	if employer.EmployeesToken != guajisettlement.SettlementToken || guajisettlement.MachineLevel != userProfile.Level {
+		//更新需要计算的数据
+		//如果雇员的数量大于0，循环计算出雇员的计算值
+		guajisettlement.Luck += machineInfo.Luck
+		guajisettlement.MachineLevel = userProfile.Level
+		guajisettlement.Quality += machineInfo.Quality
+		guajisettlement.SettlementToken = employer.EmployeesToken
+		guajisettlement.Speed += machineInfo.Speed
+		guajisettlement.OppositeOutput = machineInfo.OppositeOutput
+		guajisettlement.PositiveOutput = machineInfo.PositiveOutput
+		guajisettlement.Probability1 = machineInfo.Probability1
+		guajisettlement.Probability2 = machineInfo.Probability2
+		if len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo) > 0 {
+			guajisettlement.SettlementToken = employer.EmployeesToken
+			for _, myEmployer := range c.user.GuajiProfile.EmployeeBox.EmployeesInfo {
+				guajisettlement.Luck += EmployeeInfo[myEmployer.EmployeesID].Luck
+				guajisettlement.Quality += EmployeeInfo[myEmployer.EmployeesID].Quality
+				guajisettlement.Speed += EmployeeInfo[myEmployer.EmployeesID].Speed
+			}
+		}
+	}
+	//根据guajisettlement来计算产出
 	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
 	if size == 5 {
 		for i := 0; i < size-1; i++ {
@@ -145,11 +192,77 @@ func (c *GameClient) checkGuajiOutput() {
 		}
 		c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs[:4], c.user.GuajiOutputBox.GuajiOutputs[5:]...)
 	}
+	// a.	每10点运气值提高1%正向事件触发概率，降低1%负向事件触发概率（数值都可调整）
+	// b.	最高可提高40%的正向事件触发概率，降低40%负向事件触发概率，无法再堆叠（数值都可调整）
+	// c.	运气值提升的概率只作用于意外事件本来配置的%概率
+	// 正向事件原有概率 + 运气值增加的概率 = 正向事件的总触发概率
+	// 负向事件原有概率 - 运气值增加的概率 = 负向事件的总触发概率
+
+	// 1）	[印刷质量 * 印刷速度 + 意外产出（负像为减少，正向为相加）]  = 挂机产出（金币）
+	// 2）	每10分钟，计算一次挂机产出，并会自动收取
+	// 3）	总产出最高可收入24小时的产出，超过则无法再挂机获得
+
+	//计算本次结算的运气值，正向和负向的触发概率
+	//长正向的概率
+	var Probability1 int = guajisettlement.Probability1
+	Probability1 += (guajisettlement.Luck / 10)
+	//负向的概率
+	var Probability2 int = guajisettlement.Probability2
+	Probability2 -= (guajisettlement.Luck / 10)
+	fmt.Println(Probability1)
+	fmt.Println(Probability2)
+
+	// //根据概率确定
+	// var gailv [5]byte
+
+	var n [3]int /* n 是一个长度为 3 的数组 */
+	var j int
+	n[0] = Probability1
+	n[1] = Probability2
+	n[2] = (100 - Probability1 - Probability2)
+	rand.Seed(time.Now().Unix())
+	var result int = 0
+	_ = result
+	var sum_all int = 100
+	_ = sum_all
+	/* 输出每个数组元素的值 */
+	for j = 0; j < 3; j++ {
+		rnd := rand.Intn(sum_all)
+
+		fmt.Println(rnd)
+
+		if rnd <= n[j] {
+			result = j
+			break
+		} else {
+			sum_all -= n[j]
+		}
+	}
+	var coinNum int
+	_ = coinNum
+	coinNum = guajisettlement.Quality * guajisettlement.Speed
 	oneEvent := &common.GuajiOutputInfo{}
+	var gailv int
+
+	if result == 1 {
+		gailv = 100 - n[1]
+		oneEvent.Type = "f"
+	}
+	if result == 0 {
+		gailv = 100 + n[0]
+		oneEvent.Type = "z"
+	}
+
+	if result == 2 {
+		gailv = 100
+		oneEvent.Type = "n"
+	}
+	coinNum = coinNum * gailv / 100
 	oneEvent.UserID = c.user.UserID
-	oneEvent.Type = "z"
-	oneEvent.Name = "小明"
-	oneEvent.Items = "你好"
+	oneEvent.Name = c.user.Profile.Name
+	coinNums := strconv.Itoa(coinNum)
+	_ = coinNums
+	oneEvent.Items = "产出" + coinNums + "金币"
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
@@ -740,16 +853,21 @@ func (c *GameClient) AfterLogin() (err error) {
 	if err != nil {
 		return
 	}
-	//数据本地化
-	err = c.DownLocalizationInfo()
+	//等级信息等的初始化
+	err = c.InitializationInfo()
 	if err != nil {
 		return
 	}
 	return
 }
 
-// DownLocalizationInfo ...
-func (c *GameClient) DownLocalizationInfo() (err error) {
+// InitializationInfo ...
+func (c *GameClient) InitializationInfo() (err error) {
+
+	//第一次就初始化等级为1
+	if c.user.LoginTime.Time == "" {
+		c.user.Profile.Level = 1
+	}
 
 	return
 }
