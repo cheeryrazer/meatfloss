@@ -6,8 +6,6 @@ type GuajiProfile struct {
 	EmployeeBox *EmployeeBox // 雇员
 }
 
-}
- // ceshi ...
 // NewGuajiProfile ...
 func NewGuajiProfile(userID int) (guajiprofile *GuajiProfile) {
 	guajiprofile = &GuajiProfile{}
