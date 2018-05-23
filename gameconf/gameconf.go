@@ -163,7 +163,7 @@ func loadGoods() (err error) {
 	}
 	text := string(bin)
 	_ = text
-	fmt.Println(text)
+	// fmt.Println(text)
 	return
 }
 
@@ -208,7 +208,7 @@ func loadNPCs() (err error) {
 	}
 	text := string(bin)
 	_ = text
-	fmt.Println(text)
+	// fmt.Println(text)
 	return
 }
 
@@ -444,7 +444,7 @@ func loadRandomEvents() (err error) {
 	}
 	text := string(bin)
 	_ = text
-	fmt.Println(text)
+	// fmt.Println(text)
 	return
 }
 

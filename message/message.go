@@ -304,6 +304,21 @@ type OutputNotify struct {
 	} `json:"data"`
 }
 
+// +++++++++++++
+
+// MsgTypeClickOutputReq ...
+// 点击产出
+const MsgTypeClickOutputReq int32 = 6000
+
+// ClickOutputReq ...
+type ClickOutputReq struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data     struct {
+		GoodID string `json:"goodId"` // 物品Id
+	} `json:"data"`
+}
+
+// +++++++++++++
 // common structs
 // 下面的都是子结构体
 //--------------------------------------------------------------

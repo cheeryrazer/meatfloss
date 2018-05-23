@@ -88,6 +88,10 @@ func AddUser(userID int, user *gameuser.User) {
 		oldUser.GuajiOutputBox = user.GuajiOutputBox
 	}
 
+	if user.ClickOutputBox != nil {
+		oldUser.ClickOutputBox = user.ClickOutputBox
+	}
+
 	if user.GuajiSettlement != nil {
 		oldUser.GuajiSettlement = user.GuajiSettlement
 	}

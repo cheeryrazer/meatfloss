@@ -51,7 +51,7 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.helperChan = make(chan bool, 1)
 
 	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
-	c.waitGroup.Add(3)
+	c.waitGroup.Add(4)
 	go c.HandleRead()
 	go c.HandleWrite()
 	go c.HandleHelper()
@@ -134,8 +134,10 @@ func (c *GameClient) checkGuajiOutput() {
 
 	//取出机器的配置的信息
 
-	// machine:=&
+	goods := gameconf.AllGoods
 
+	fmt.Println(goods["wp0001"])
+	// fmt.Println("111")
 	var size int = len(c.user.GuajiOutputBox.GuajiOutputs)
 	if size == 5 {
 		for i := 0; i < size-1; i++ {
@@ -298,6 +300,8 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleSaveClientLayoutReq(metaData, rawMsg)
 	case message.MsgTypeOutputReq:
 		return c.HandleOutputReq(metaData, rawMsg)
+	case message.MsgTypeClickOutputReq:
+		return c.HandleClickOutputReq(metaData, rawMsg)
 	}
 
 	return
@@ -661,6 +665,49 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	return
 }
 
+// HandleClickOutputReq ...
+func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+
+	ClickOutput:=c.user.ClickOutputBox.ClickOutput
+	ClickOutput.GoodID="wp0001"
+	ClickOutput.Time=int(time.Now().Unix())
+	ClickOutput.Type=0
+	ClickOutput.UserID=c.user.UserID
+	reply := &message.ClickOutputReq{}
+	reply.Meta.MessageType = "ClickOutputReq"
+	reply.Meta.MessageTypeID = message.MsgTypeClickOutputReq
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	// if len(c.user.GuajiOutputBox.GuajiOutputs) == 0 {
+	// 	reply.Meta.Error = true
+	// 	reply.Meta.ErrorMessage = "GuajiOutputs don't exits"
+	// 	c.SendMsg(reply)
+	// 	return
+	// }
+	//消息的推送
+	//Events: = make([]common.EventInfo, 0)
+	reply.Data.GoodID = ClickOutput.GoodID
+	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
+	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
+	// }
+
+	c.persistClikOutput()
+	fmt.Println((c.user.ClickOutputBox))
+	c.SendMsg(reply)
+
+	return
+}
+func (c *GameClient) persistClikOutput() {
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.ClickOutputBox)
+	output, _ := cpy.(*gameuser.ClickOutputBox)
+	newUser.ClickOutputBox = output
+	persistent.AddUser(c.UserID, newUser)
+}
 func (c *GameClient) persistLoginTime() {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID

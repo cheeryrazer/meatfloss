@@ -122,6 +122,14 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		}
 	}
 
+	if user.ClickOutputBox != nil {
+		data, err := json.Marshal(user.ClickOutputBox)
+		if err == nil {
+			glog.Info(string(data))
+			fields["ClickOutputBox"] = string(data)
+		}
+	}
+
 	if user.GuajiSettlement != nil {
 		data, err := json.Marshal(user.GuajiSettlement)
 		if err == nil {
@@ -178,7 +186,8 @@ func LoadUser(userID int) *gameuser.User {
 		"LoginTime",       // 6
 		"GuajiOutputBox",  // 7
 		"GuajiSettlement", // 8
-		"GuajiProfile"}...).Result()
+		"GuajiProfile",
+		"ClickOutputBox" }...).Result()
 	_ = err
 	_ = result
 	if err != nil {
@@ -226,9 +235,9 @@ func LoadUser(userID int) *gameuser.User {
 			if err == nil {
 				user.TaskBox = obj
 				taskNum := len(user.TaskBox.Tasks)
-				fmt.Println(data)
-				fmt.Println("userID: ", obj.UserID)
-				fmt.Println("taskNum: ", taskNum)
+				// fmt.Println(data)
+				// fmt.Println("userID: ", obj.UserID)
+				// fmt.Println("taskNum: ", taskNum)
 
 				_ = taskNum
 			} else {
@@ -305,6 +314,20 @@ func LoadUser(userID int) *gameuser.User {
 			}
 		}
 	}
+
+		//ClickOutputBox
+		if result[10] != nil {
+			data, ok := result[10].(string)
+			if ok && data != "" {
+				obj := gameuser.NewClickOutputBox(userID)
+				err := json.Unmarshal([]byte(data), obj)
+				if err == nil {
+					user.ClickOutputBox = obj
+				} else {
+					glog.Warning("json.Unmarshal failed")
+				}
+			}
+		}
 	//GuajiSettlement
 	if result[8] != nil {
 		data, ok := result[8].(string)
@@ -364,6 +387,10 @@ func LoadUser(userID int) *gameuser.User {
 	if user.GuajiOutputBox == nil {
 		user.GuajiOutputBox = gameuser.NewGuajiOutputBox(userID)
 	}
+	
+	if user.ClickOutputBox == nil {
+		user.ClickOutputBox = gameuser.NewClickOutputBox(userID)
+	}
 
 	if user.GuajiSettlement == nil {
 		user.GuajiSettlement = gameuser.NewGuajiSettlement(userID)
@@ -372,7 +399,7 @@ func LoadUser(userID int) *gameuser.User {
 	if user.GuajiProfile == nil {
 		user.GuajiProfile = gameuser.NewGuajiProfile(userID)
 	}
-
+		
 	return user
 }
 

@@ -18,6 +18,7 @@ type User struct {
 	Layout          *message.ClientLayout
 	LoginTime       *LoginTime
 	GuajiOutputBox  *GuajiOutputBox
+	ClickOutputBox  *ClickOutputBox
 	GuajiSettlement *GuajiSettlement //挂机结算暂存数据
 	GuajiProfile    *GuajiProfile    //挂机需要的配置的信息
 }
@@ -34,6 +35,7 @@ func NewUser(userID int) (user *User) {
 	user.Layout = message.NewClientLayout()
 	user.LoginTime = NewLoginTime(userID)
 	user.GuajiOutputBox = NewGuajiOutputBox(userID)
+	user.ClickOutputBox = NewClickOutputBox(userID)
 	user.GuajiSettlement = NewGuajiSettlement(userID)
 	user.GuajiProfile = NewGuajiProfile(userID)
 	return

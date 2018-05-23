@@ -25,6 +25,7 @@ type GuajiSettlement struct {
 	CritOutput          string // 暴击产出
 	Upmaterial          string // 升级材料
 	Uptime              int    // 升级时间
+	CurrentTemperature 	int	   // 当前温度
 }
 
 // NewGuajiSettlement ...

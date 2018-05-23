@@ -324,7 +324,7 @@ func LoadRandomEventConf() ([]*RandomEvent, error) {
 
 	q, err := db.Query(sqlstr)
 	if err != nil {
-		fmt.Printf("sql: %s\n", sqlstr)
+		// fmt.Printf("sql: %s\n", sqlstr)
 
 		fmt.Printf("err: %s\n", err)
 		return nil, err
@@ -474,7 +474,7 @@ func LoadFurnitureConf() ([]*Furniture, error) {
 	sqlstr := `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, dismantling, fashion_gain, warmth_gain, cool_gain, lovely_gain, motion_gain, stars, allow_pileup` +
 		` FROM ` + defaultDbName + `.tbl_furniture `
-	fmt.Println(sqlstr)
+	// fmt.Println(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
@@ -529,7 +529,7 @@ func LoadGuajiConf() ([]*Guaji, error) {
 	sqlstr := `SELECT ` +
 		`id, jqlv, lv, sudu, zhiliang, yunqi, cswd, zgwd, mmlq, cd, mcdj, tupian, glnpc, zhengxiang, gailv1, fuxiang, gailv2, djcc, bjgl, bjcc, sjcl, time` +
 		` FROM ` + defaultDbName + `.tbl_guaji`
-	fmt.Println(sqlstr)
+	// fmt.Println(sqlstr)
 	q, err := db.Query(sqlstr)
 
 	if err != nil {

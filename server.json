@@ -5,14 +5,14 @@
          "port":3306,
          "user":"root",
          "password":"yrmysql1234",
-         "dbName" : "meatfloss7"
+         "dbName" : "meatfloss9"
       }
    ],
 
    "redisServer":{  
       "host":"192.168.1.199",
       "port":6379,
-      "db" : 7
+      "db" : 9
    },
    "isTestEnvioriment" : true,
    "log":{  
