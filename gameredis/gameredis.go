@@ -187,7 +187,7 @@ func LoadUser(userID int) *gameuser.User {
 		"GuajiOutputBox",  // 7
 		"GuajiSettlement", // 8
 		"GuajiProfile",
-		"ClickOutputBox" }...).Result()
+		"ClickOutputBox"}...).Result()
 	_ = err
 	_ = result
 	if err != nil {
@@ -294,7 +294,7 @@ func LoadUser(userID int) *gameuser.User {
 			obj := &gameuser.LoginTime{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
-				user.LoginTime = obj
+				//user.LoginTime = obj
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -315,19 +315,19 @@ func LoadUser(userID int) *gameuser.User {
 		}
 	}
 
-		//ClickOutputBox
-		if result[10] != nil {
-			data, ok := result[10].(string)
-			if ok && data != "" {
-				obj := gameuser.NewClickOutputBox(userID)
-				err := json.Unmarshal([]byte(data), obj)
-				if err == nil {
-					user.ClickOutputBox = obj
-				} else {
-					glog.Warning("json.Unmarshal failed")
-				}
+	//ClickOutputBox
+	if result[10] != nil {
+		data, ok := result[10].(string)
+		if ok && data != "" {
+			obj := gameuser.NewClickOutputBox(userID)
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.ClickOutputBox = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
 			}
 		}
+	}
 	//GuajiSettlement
 	if result[8] != nil {
 		data, ok := result[8].(string)
@@ -387,7 +387,7 @@ func LoadUser(userID int) *gameuser.User {
 	if user.GuajiOutputBox == nil {
 		user.GuajiOutputBox = gameuser.NewGuajiOutputBox(userID)
 	}
-	
+
 	if user.ClickOutputBox == nil {
 		user.ClickOutputBox = gameuser.NewClickOutputBox(userID)
 	}
@@ -399,7 +399,7 @@ func LoadUser(userID int) *gameuser.User {
 	if user.GuajiProfile == nil {
 		user.GuajiProfile = gameuser.NewGuajiProfile(userID)
 	}
-		
+
 	return user
 }
 
