@@ -11,7 +11,7 @@ import (
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
 	"meatfloss/gameuser"
-
+	"meatfloss/logic"
 	"meatfloss/message"
 	"meatfloss/persistent"
 	"meatfloss/usermgr"
@@ -995,7 +995,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// }
 	//消息的推送
 	//Events: = make([]common.EventInfo, 0)
-	//logic.RandOutputInfo(c.user)
+	logic.RandOutputInfo(c.user)
 	reply.Data.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
 	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
 	reply.Data.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
