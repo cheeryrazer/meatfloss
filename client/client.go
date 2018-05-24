@@ -52,7 +52,7 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.KickOffChan = make(chan bool, 1)
 	c.helperChan = make(chan bool, 1)
 	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
-	c.waitGroup.Add(4)
+	c.waitGroup.Add(3)
 	go c.HandleRead()
 	go c.HandleWrite()
 	go c.HandleHelper()
@@ -153,7 +153,7 @@ func (c *GameClient) onPeriod() {
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
 	c.checkGuajiOutput()
-
+	c.coolTemperature()
 }
 
 func (c *GameClient) checkGuajiOutput() {
