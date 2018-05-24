@@ -16,6 +16,7 @@ import (
 	"meatfloss/usermgr"
 	"meatfloss/utils"
 	"net"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -118,29 +119,7 @@ func (c *GameClient) checkGuajiOutput() {
 			return
 		}
 	}
-	// //取出当前的等级
-	// userProfile := c.user.Profile
-	// //根据等级取出当前的机器的结算数据
-	// machine := gameconf.AllGuajis
-	// machineInfo := machine[userProfile.Level]
-	// _ = machineInfo
-	// //判断雇员的索引是为空，不为空的话，查出雇员的信息
-	// employer := c.user.GuajiProfile.EmployeeBox
-	// _ = employer
-	//算出一个随机的值作为token
-	//随机数
-	// r := rand.New(rand.NewSource(time.Now().Unix()))
-	// fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
-	// string := strconv.Itoa(r.Intn(10000))
-	// str := "token" + string
-	// onet := &common.EmployeesInfo{}
-	// onet.EmployeesID = "gy001"
-	// num := len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
-	// fmt.Println(num)
-	// if num == 0 {
-	// 	c.user.GuajiProfile.EmployeeBox.EmployeesToken = str
-	// 	c.user.GuajiProfile.EmployeeBox.EmployeesInfo = append(c.user.GuajiProfile.EmployeeBox.EmployeesInfo, onet)
-	// }
+
 	//通过匹配等级和雇员的token值判定是否需要更新计算的产出的参数
 	guajisettlement := c.user.GuajiSettlement
 	//guajisettlement.MinLevel
@@ -203,6 +182,12 @@ func (c *GameClient) checkGuajiOutput() {
 	}
 	var coinNum int
 	_ = coinNum
+
+	fmt.Println("_______________")
+	fmt.Println(guajisettlement.Quality)
+	fmt.Println(guajisettlement.Speed)
+	fmt.Println("_______________")
+
 	coinNum = guajisettlement.Quality * guajisettlement.Speed
 	oneEvent := &common.GuajiOutputInfo{}
 	var gailv int
@@ -391,9 +376,186 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleOutputReq(metaData, rawMsg)
 	case message.MsgTypeClickOutputReq:
 		return c.HandleClickOutputReq(metaData, rawMsg)
+	case message.MsgTypeEmployeeListReq:
+		return c.HandleEmployeeListReq(metaData, rawMsg)
+	case message.MsgTypeEmployeeAdjustReq:
+		return c.HandleEmployeeAdjustReq(metaData, rawMsg)
+
+	case message.MsgTypeMyEmployeeReq:
+		return c.HandleMyEmployeeReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+// HandleEmployeeAdjustReq ...
+func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.MyEmployeeNotify{}
+	reply.Meta.MessageType = "MyEmployeeNotify"
+	reply.Meta.MessageTypeID = message.MsgMyEmployeeNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	var num int = len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	var numB int = len(c.user.Bag.BagEmployee)
+	if num == 0 && numB == 0 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+	if num != 0 {
+		//工作的
+		for a := 0; a < numB; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.Bag.BagEmployee[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
+			//}(a)
+		}
+	}
+	if numB != 0 {
+		//背包
+		for a := 0; a < num; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.GuajiProfile.EmployeeBox.EmployeesInfo[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeWork = append(reply.Data.EmployeeWork, myEmployee)
+			//}(a)
+		}
+	}
+	c.SendMsg(reply)
+	return
+}
+
+// HandleEmployeeAdjustReq ...
+func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.EmployeeAdjustNotify{}
+	reply.Meta.MessageType = "EmployeeAdjustNotify"
+	reply.Meta.MessageTypeID = message.MsgEmployeeAdjustNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	req := &message.SaveEmployeeAdjustReq{}
+
+	fmt.Println(req.Data.EmployeeAdjust)
+
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+	//产生随机的标示值
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
+	string := strconv.Itoa(r.Intn(10000))
+	str := "token" + string
+
+	cpy := deepcopy.Copy(req.Data.EmployeeAdjust)
+	layout, _ := cpy.(*message.EmployeeAdjust)
+	//加入工作中
+	if len(layout.Employee) > 0 {
+		c.user.GuajiProfile.EmployeeBox.EmployeesInfo = make([]*common.EmployeesInfo, 0)
+		c.user.GuajiProfile.EmployeeBox.EmployeesToken = str
+		for a := len(layout.Employee); a >= 1; a-- {
+			go func(who int) {
+				onet := &common.EmployeesInfo{}
+				onet.EmployeesID = layout.Employee[who]
+				fmt.Println("+++++++++++++++++++")
+				fmt.Println(layout.Employee[who])
+				c.user.GuajiProfile.EmployeeBox.EmployeesInfo = append(c.user.GuajiProfile.EmployeeBox.EmployeesInfo, onet)
+
+				time.Sleep(10 * time.Nanosecond)
+			}(a)
+		}
+		runtime.Gosched()
+	}
+
+	//加入背包
+	if len(layout.Back) > 0 {
+		c.user.Bag.BagEmployee = make([]*common.EmployeesInfo, 0)
+
+		for a := len(layout.Back); a >= 1; a-- {
+			go func(who int) {
+				onet := &common.EmployeesInfo{}
+				onet.EmployeesID = layout.Employee[who]
+				fmt.Println("+++++++++++++++++++")
+				fmt.Println(layout.Employee[who])
+				c.user.Bag.BagEmployee = append(c.user.Bag.BagEmployee, onet)
+
+				time.Sleep(10 * time.Nanosecond)
+			}(a)
+		}
+		runtime.Gosched()
+	}
+	fmt.Println(len(layout.Employee))
+	c.SendMsg(reply)
+	c.persistEmployee()
+	c.persistBagBox()
+	return
+}
+
+func (c *GameClient) persistEmployee() {
+
+	Employee := &gameuser.User{}
+
+	cpy := deepcopy.Copy(c.user.GuajiProfile)
+	adjust, _ := cpy.(*gameuser.GuajiProfile)
+	Employee.GuajiProfile = adjust
+	persistent.AddUser(c.UserID, Employee)
+
+}
+
+// HandleEmployeeListReq ...
+func (c *GameClient) HandleEmployeeListReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.EmployeeListNotify{}
+	reply.Meta.MessageType = "EmployeeListNotify"
+	reply.Meta.MessageTypeID = message.MsgEmployeeListNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	reply.Data.Employee = make([]*message.Employeeinfo, 0)
+	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+
+	for a := 1; a <= 10; a++ {
+		//	go func(who int) {
+		myEmployee := &message.Employeeinfo{}
+		var str = "gy00"
+		if a <= 9 {
+			str = "gy00"
+		} else {
+			str = "gy0"
+		}
+		d := strconv.Itoa(a)
+		str += d
+		myEmployee.Speed = gameconf.AllEmployees[str].Speed
+		myEmployee.Quality = gameconf.AllEmployees[str].Quality
+		myEmployee.Number = gameconf.AllEmployees[str].Number
+		myEmployee.Luck = gameconf.AllEmployees[str].Luck
+		myEmployee.Introdution = gameconf.AllEmployees[str].Introdution
+		myEmployee.EmployeeName = gameconf.AllEmployees[str].EmployeeName
+		myEmployee.AvatarImage = gameconf.AllEmployees[str].AvatarImage
+		reply.Data.Employee = append(reply.Data.Employee, myEmployee)
+		//}(a)
+	}
+	c.SendMsg(reply)
+	return
+
 }
 
 //回复前端的信息
@@ -413,7 +575,9 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 	}
 	//消息的推送
 	//Events: = make([]common.EventInfo, 0)
-	reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, len(c.user.GuajiOutputBox.GuajiOutputs))
+
+	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
+	reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
@@ -907,6 +1071,10 @@ func (c *GameClient) InitializationInfo() (err error) {
 			}
 			var coinNum int
 			_ = coinNum
+
+			fmt.Println(guajisettlement.Quality)
+			fmt.Println(guajisettlement.Speed)
+
 			coinNum = guajisettlement.Quality * guajisettlement.Speed
 			oneEvent := &common.GuajiOutputInfo{}
 			var gailv int
@@ -960,6 +1128,29 @@ func (c *GameClient) PushSettlement() (err error) {
 	if employer.EmployeesToken != guajisettlement.SettlementToken || guajisettlement.MachineLevel != userProfile.Level {
 		//更新需要计算的数据
 		//如果雇员的数量大于0，循环计算出雇员的计算值
+		guajisettlement.Luck = 0
+
+		guajisettlement.Quality = 0
+
+		guajisettlement.Speed = 0
+		if len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo) > 0 {
+
+			for _, myEmployer := range c.user.GuajiProfile.EmployeeBox.EmployeesInfo {
+
+				fmt.Println("_______________")
+				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Quality)
+				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Speed)
+				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Luck)
+
+				fmt.Println("_______________")
+
+				guajisettlement.Luck += EmployeeInfo[myEmployer.EmployeesID].Luck
+				guajisettlement.Quality += EmployeeInfo[myEmployer.EmployeesID].Quality
+				guajisettlement.Speed += EmployeeInfo[myEmployer.EmployeesID].Speed
+			}
+
+		}
+
 		guajisettlement.Luck += machineInfo.Luck
 		guajisettlement.MachineLevel = userProfile.Level
 		guajisettlement.Quality += machineInfo.Quality
@@ -969,14 +1160,6 @@ func (c *GameClient) PushSettlement() (err error) {
 		guajisettlement.PositiveOutput = machineInfo.PositiveOutput
 		guajisettlement.Probability1 = machineInfo.Probability1
 		guajisettlement.Probability2 = machineInfo.Probability2
-		if len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo) > 0 {
-			guajisettlement.SettlementToken = employer.EmployeesToken
-			for _, myEmployer := range c.user.GuajiProfile.EmployeeBox.EmployeesInfo {
-				guajisettlement.Luck += EmployeeInfo[myEmployer.EmployeesID].Luck
-				guajisettlement.Quality += EmployeeInfo[myEmployer.EmployeesID].Quality
-				guajisettlement.Speed += EmployeeInfo[myEmployer.EmployeesID].Speed
-			}
-		}
 	}
 
 	return

@@ -44,6 +44,45 @@ type OutputReq struct {
 	} `json:"data"`
 }
 
+// MsgEmployeeListReq ...
+// 查看配置雇员的请求
+const MsgTypeEmployeeListReq int32 = 1481
+
+// EmployeeListReq ...
+// 前端用户的获取雇员的信息系
+type EmployeeListReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		EmployeeList string `json:"employeelist"` // npcId 目前只有一个1
+	} `json:"data"`
+}
+
+// MsgTypeEmployeeAdjustReq ...
+// 个人雇员的调整
+const MsgTypeEmployeeAdjustReq int32 = 1482
+
+// SaveEmployeeAdjustReq ...
+// 个人雇员的调整的请求
+type SaveEmployeeAdjustReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		EmployeeAdjust *EmployeeAdjust `json:"employeeadjust"` // npcId 目前只有一个1
+	} `json:"data"`
+}
+
+// MsgTypeMyEmployeeReq ...
+// 查看自己的雇员
+const MsgTypeMyEmployeeReq int32 = 1483
+
+// ShowMyEmployeeListReq ...
+// 查看自己的雇员
+type ShowMyEmployeeListReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		EmployeeList string `json:"employeelist"` // npcId 目前只有一个1
+	} `json:"data"`
+}
+
 // +++++++++++++
 
 // MsgTypeMarkNewsAsReadReq ...
@@ -138,6 +177,51 @@ const MsgTypeOutputReply int32 = 5000
 // OutPutReply ...
 //  产出报告的响应
 type OutPutReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeEmployeeListReply ...
+// 雇员列表的请求
+const MsgTypeEmployeeListReply int32 = 5600
+
+// EmployeeListReply ...
+//  查看所有可配置的雇员的列表
+type EmployeeListReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeEmployeeAdjustReply ...
+// 雇员列表的请求修改
+const MsgTypeEmployeeAdjustReply int32 = 5700
+
+// EmployeeAdjustReply ...
+//  更改雇员配置
+type EmployeeAdjustReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeMyEmployeeReply ...
+// 我的雇员请请求查看
+const MsgTypeMyEmployeeReply int32 = 5800
+
+// MyEmployeeReply ...
+//  查看自己的雇员
+type MyEmployeeReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Dummy string `json:"dummy"`
@@ -304,6 +388,43 @@ type OutputNotify struct {
 	} `json:"data"`
 }
 
+// MsgEmployeeListNotify ...
+const MsgEmployeeListNotify int32 = 3560
+
+// EmployeeListNotify ...
+//  可配置雇员的推送
+type EmployeeListNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Employee []*Employeeinfo `json:"employeesinfo"`
+	} `json:"data"`
+}
+
+// MsgEmployeeAdjustNotify ...
+const MsgEmployeeAdjustNotify int32 = 3570
+
+// EmployeeAdjustNotify ...
+//  雇员调整的推送
+type EmployeeAdjustNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Employee []*Employeeinfo `json:"employeeadjust"`
+	} `json:"data"`
+}
+
+// MsgMyEmployeeNotify ...
+const MsgMyEmployeeNotify int32 = 3580
+
+// MyEmployeeNotify ...
+//  自己雇员的推送
+type MyEmployeeNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		EmployeeWork []*Employeeinfo `json:"employeeWork"`
+		EmployeeBack []*Employeeinfo `json:"employeeBack"`
+	} `json:"data"`
+}
+
 // +++++++++++++
 
 // MsgTypeClickOutputReq ...
@@ -313,7 +434,7 @@ const MsgTypeClickOutputReq int32 = 6000
 // ClickOutputReq ...
 type ClickOutputReq struct {
 	Meta ReplyMetaData `json:"meta"`
-	Data     struct {
+	Data struct {
 		GoodID string `json:"goodId"` // 物品Id
 	} `json:"data"`
 }
@@ -443,6 +564,12 @@ type ClientLayout struct {
 	Dress  map[string]string `json:"dress"`
 }
 
+// EmployeeAdjust ...
+type EmployeeAdjust struct {
+	Employee map[int]string `json:"employee"`
+	Back     map[int]string `json:"back"`
+}
+
 // NewClientLayout ...
 func NewClientLayout() *ClientLayout {
 	layout := &ClientLayout{}
@@ -462,4 +589,25 @@ type SingleGuaji struct {
 // Guaji ...
 type Guaji struct {
 	List []SingleGuaji `json:"list"`
+}
+
+// Employeeinfo ...
+type Employeeinfo struct {
+	Number       string // 编号
+	AvatarImage  string // 头像图片
+	EmployeeName string // 雇员名字
+	Speed        int    // 速度
+	Quality      int    // 质量
+	Luck         int    // 运气
+	Introdution  string // 介绍
+}
+
+// EmployeeinfoId ...
+type EmployeeinfoId struct {
+	Number string // 编号
+}
+
+// EmployeeinfoId1 ...
+type EmployeeinfoId1 struct {
+	Number string // 编号
 }

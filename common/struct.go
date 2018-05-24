@@ -9,8 +9,9 @@ type BagCell struct {
 
 // Bag ...
 type Bag struct {
-	UserID int
-	Cells  map[int64]*BagCell
+	UserID      int
+	Cells       map[int64]*BagCell
+	BagEmployee []*EmployeesInfo
 }
 
 // NewBag ...
@@ -129,14 +130,16 @@ type GuajiOutputInfo struct {
 	Time   string //产出时间
 	Items  string //产出的物品
 }
+
 // ClickOutputInfo ...
 type ClickOutputInfo struct {
 	UserID int    // 用户的id
-	Type   int  // 0.点击产出 1.暴击产出
-	Time   int  //产出时间
-	GoodID string  //产出物品
+	Type   int    // 0.点击产出 1.暴击产出
+	Time   int    //产出时间
+	GoodID string //产出物品
 }
+
 // EmployeesInfo ...
-type EmployeesInfo struct {  
+type EmployeesInfo struct {
 	EmployeesID string // 雇员的ID
 }
