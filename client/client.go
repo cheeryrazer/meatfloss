@@ -967,10 +967,12 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
-	err = c.AfterLogin()
-	c.persistLoginTime()
+
+	c.AfterLogin()
+
 	fmt.Println(c.UserID)
 	fmt.Println("小花花花花花花花花")
+
 	return
 }
 
@@ -1063,6 +1065,7 @@ func (c *GameClient) persistPick() {
 	persistent.AddUser(c.UserID, newUser)
 }
 func (c *GameClient) persistLoginTime() {
+
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
 	cpy := deepcopy.Copy(c.user.LoginTime)
@@ -1104,9 +1107,11 @@ func (c *GameClient) AfterLogin() (err error) {
 
 // InitializationInfo ...
 func (c *GameClient) InitializationInfo() (err error) {
-
+	fmt.Println(c.user.LoginTime.Time)
+	fmt.Println("______+++_____")
 	//第一次就初始化等级为1
 	if c.user.LoginTime.Time == "" {
+		fmt.Println("+++++++++++")
 		c.user.Profile.Level = 1
 	} else {
 		//不是第一次登陆，查看上次的登陆时间，如果差值大于一天，取上限24小时，否则，取上次的登陆时间进行运算
@@ -1210,6 +1215,9 @@ func (c *GameClient) InitializationInfo() (err error) {
 		c.persistGuajiProfile()
 		c.persistOutput()
 	}
+
+	c.user.LoginTime.Time = time.Now().Format("2006-01-02 15:04:05")
+	c.persistLoginTime()
 	return
 }
 
