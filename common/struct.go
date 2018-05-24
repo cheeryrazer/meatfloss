@@ -129,14 +129,17 @@ type GuajiOutputInfo struct {
 	Time   string //产出时间
 	Items  string //产出的物品
 }
+
 // ClickOutputInfo ...
 type ClickOutputInfo struct {
 	UserID int    // 用户的id
-	Type   int  // 0.点击产出 1.暴击产出
-	Time   int  //产出时间
-	GoodID string  //产出物品
+	Type   int    // 0.点击产出 1.暴击产出
+	Time   int    //产出时间
+	GoodID string //产出物品
+	GoodNum string   // 产出数量
 }
+
 // EmployeesInfo ...
-type EmployeesInfo struct {  
+type EmployeesInfo struct {
 	EmployeesID string // 雇员的ID
 }

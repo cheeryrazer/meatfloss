@@ -315,9 +315,29 @@ type ClickOutputReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data     struct {
 		GoodID string `json:"goodId"` // 物品Id
+		Temperature float64 `json:"temperature"` // 温度
+		Num string  `json:"num"` // 物品数
+		CD int `json:"cd"` // 机器过热cd
+		Percent float64 `json:"percent"` // 温度百分比
 	} `json:"data"`
 }
+// MsgTypePickReq ...
+ const MsgTypePickReq int32 = 7000
+//  PickReq ...
+ type PickReq struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data     struct {
+		GoodID string `json:"goodId"` // 物品Id
+		Num string  `json:"num"` // 物品数
+		Status int `json:"status"` // 状态
+	} `json:"data"`
+}
+// ClickStatusReq ...
+type ClickStatusReq struct {
 
+		Status int `json:"status"` // 物品Id
+
+}
 // +++++++++++++
 // common structs
 // 下面的都是子结构体
