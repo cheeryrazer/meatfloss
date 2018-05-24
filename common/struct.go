@@ -137,6 +137,10 @@ type ClickOutputInfo struct {
 	Type   int    // 0.点击产出 1.暴击产出
 	Time   int    //产出时间
 	GoodID string //产出物品
+<<<<<<< HEAD
+=======
+	GoodNum string   // 产出数量
+>>>>>>> ea6464ad5be227b5aa7d8d01509ad87fa9562b8c
 }
 
 // EmployeesInfo ...

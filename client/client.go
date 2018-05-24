@@ -11,6 +11,7 @@ import (
 	"meatfloss/gameconf"
 	"meatfloss/gameredis"
 	"meatfloss/gameuser"
+	"meatfloss/logic"
 	"meatfloss/message"
 	"meatfloss/persistent"
 	"meatfloss/usermgr"
@@ -51,10 +52,19 @@ func (c *GameClient) HandleConnection(conn *websocket.Conn) {
 	c.KickOffChan = make(chan bool, 1)
 	c.helperChan = make(chan bool, 1)
 	//c.conn.SetReadDeadline((time.Now().Add(5 * time.Second)))
+<<<<<<< HEAD
 	c.waitGroup.Add(3)
 	go c.HandleRead()
 	go c.HandleWrite()
 	go c.HandleHelper()
+=======
+	c.waitGroup.Add(5)
+	go c.HandleRead()
+	go c.HandleWrite()
+	go c.HandleHelper()
+	go c.HandleHelperGuaji()
+	go c.HandleHelperGuajiTemperature()
+>>>>>>> ea6464ad5be227b5aa7d8d01509ad87fa9562b8c
 	if c.UserID != 0 {
 		Mgr.onLogout(c)
 	}
@@ -86,6 +96,81 @@ func (c *GameClient) HandleHelper() {
 	c.waitGroup.Done()
 }
 
+<<<<<<< HEAD
+=======
+// HandleHelperGuaji ...
+func (c *GameClient) HandleHelperGuaji() {
+	for {
+		exit := false
+		select {
+		case <-c.helperChan:
+			exit = true
+			break
+		case <-time.After(time.Second * 10):
+			c.onPeriodGuaji()
+		}
+		if exit {
+			break
+		}
+	}
+	glog.Info("HandleHelperGuaji exit")
+	c.waitGroup.Done()
+}
+
+// HandleHelperGuajiTemperature ...
+func (c *GameClient) HandleHelperGuajiTemperature() {
+	for {
+		exit := false
+		select {
+		case <-c.helperChan:
+			exit = true
+			break
+		case <-time.After(time.Second * 1):
+			c.coolTemperature()
+		}
+		if exit {
+			break
+		}
+	}
+	glog.Info("HandleHelperGuajiTemperature exit")
+	c.waitGroup.Done()
+}
+func (c *GameClient) coolTemperature() {
+	// fmt.Println(c.user.GuajiProfile.CurrentTemperature)
+	//取出当前的等级
+	userProfile := c.user.Profile
+	//根据等级取出当前的机器的结算数据
+	machine := gameconf.AllGuajis
+	// 默认等级0+1
+	machineInfo := machine[userProfile.Level+1]
+	if c.user.GuajiProfile.CDPick > 1 {
+		c.user.GuajiProfile.CDPick--
+	}
+	if c.user.GuajiProfile.CDPick == 1 {
+		c.user.GuajiProfile.CDPick--
+		c.SendMsg(&message.ClickStatusReq{Status: 1})
+	}
+	// 取出cd
+	cd := c.user.GuajiProfile.CDTemperature
+	if cd == 1 {
+		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+
+	}
+	currentTemperature := c.user.GuajiProfile.CurrentTemperature
+
+	if cd >= 1 {
+		c.user.GuajiProfile.CDTemperature = cd - 1
+		return
+	}
+
+	cdPerDegree := machineInfo.CDPerDegree
+	c.user.GuajiProfile.CurrentTemperature = currentTemperature - float64(float64(1)/float64(cdPerDegree))
+	if c.user.GuajiProfile.CurrentTemperature < float64(machineInfo.InitialTemperature) {
+		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+	}
+	// fmt.Println(currentTemperature)
+}
+>>>>>>> ea6464ad5be227b5aa7d8d01509ad87fa9562b8c
 func (c *GameClient) onPeriod() {
 	c.lock.Lock()
 	if c.UserID != 0 {
@@ -376,6 +461,7 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleOutputReq(metaData, rawMsg)
 	case message.MsgTypeClickOutputReq:
 		return c.HandleClickOutputReq(metaData, rawMsg)
+<<<<<<< HEAD
 	case message.MsgTypeEmployeeListReq:
 		return c.HandleEmployeeListReq(metaData, rawMsg)
 	case message.MsgTypeEmployeeAdjustReq:
@@ -383,6 +469,10 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 
 	case message.MsgTypeMyEmployeeReq:
 		return c.HandleMyEmployeeReq(metaData, rawMsg)
+=======
+	case message.MsgTypePickReq:
+		return c.HandlePickReq(metaData, rawMsg)
+>>>>>>> ea6464ad5be227b5aa7d8d01509ad87fa9562b8c
 	}
 
 	return
@@ -920,11 +1010,14 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 // HandleClickOutputReq ...
 func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
 
+<<<<<<< HEAD
 	ClickOutput := c.user.ClickOutputBox.ClickOutput
 	ClickOutput.GoodID = "wp0001"
 	ClickOutput.Time = int(time.Now().Unix())
 	ClickOutput.Type = 0
 	ClickOutput.UserID = c.user.UserID
+=======
+>>>>>>> ea6464ad5be227b5aa7d8d01509ad87fa9562b8c
 	reply := &message.ClickOutputReq{}
 	reply.Meta.MessageType = "ClickOutputReq"
 	reply.Meta.MessageTypeID = message.MsgTypeClickOutputReq
@@ -938,7 +1031,12 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// }
 	//消息的推送
 	//Events: = make([]common.EventInfo, 0)
-	reply.Data.GoodID = ClickOutput.GoodID
+	logic.RandOutputInfo(c.user)
+	reply.Data.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
+	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
+	reply.Data.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
+	reply.Data.CD = c.user.GuajiProfile.CDTemperature
+	reply.Data.Percent = c.user.GuajiProfile.TemperaturePercent
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
@@ -957,6 +1055,47 @@ func (c *GameClient) persistClikOutput() {
 	cpy := deepcopy.Copy(c.user.ClickOutputBox)
 	output, _ := cpy.(*gameuser.ClickOutputBox)
 	newUser.ClickOutputBox = output
+	persistent.AddUser(c.UserID, newUser)
+}
+
+// HandlePickReq ...
+func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	fmt.Println("捡起")
+	reply := &message.PickReq{}
+	reply.Meta.MessageType = "PickReq"
+	reply.Meta.MessageTypeID = message.MsgTypePickReq
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	reply.Data.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
+	reply.Data.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
+	reply.Data.Status = 1
+	//5秒内捡起
+	if c.user.GuajiProfile.CDPick>0{
+		reply.Data.Status = 2
+		c.persistPick()
+		c.user.GuajiProfile.CDPick =0
+	}
+
+	c.SendMsg(reply)
+	return 
+}
+func (c *GameClient) persistPick(){
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+	if c.user.Bag != nil {
+		for _,v :=range c.user.Bag.Cells {
+			if v.GoodsID==c.user.ClickOutputBox.ClickOutput.GoodID{
+				fmt.Println("你好啊啊啊啊啊")
+				num,err:=strconv.Atoi(c.user.ClickOutputBox.ClickOutput.GoodNum) 
+				if err==nil{
+					v.Count+=num
+				}
+				
+			}
+		}
+	}
+	cpy := deepcopy.Copy(c.user.Bag)
+	newUserBag, _ := cpy.(*common.Bag)
+	newUser.Bag = newUserBag
 	persistent.AddUser(c.UserID, newUser)
 }
 func (c *GameClient) persistLoginTime() {
@@ -1160,6 +1299,16 @@ func (c *GameClient) PushSettlement() (err error) {
 		guajisettlement.PositiveOutput = machineInfo.PositiveOutput
 		guajisettlement.Probability1 = machineInfo.Probability1
 		guajisettlement.Probability2 = machineInfo.Probability2
+	}
+	if c.user.GuajiProfile.CurrentTemperature == 0 {
+		//取出当前的等级
+		userProfile := c.user.Profile
+		//根据等级取出当前的机器的结算数据
+		machine := gameconf.AllGuajis
+		// 默认等级0+1
+		machineInfo := machine[userProfile.Level+1]
+		//取出机器温度
+		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
 	}
 
 	return
