@@ -983,6 +983,7 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 
 // HandleLoginReq ...
 func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
 	if c.logined {
 		// multiple login disallowed.
 		return
@@ -1032,9 +1033,12 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
 
+	// fmt.Println(c.user.GuajiProfile)
+
+	// fmt.Println(c.user.LoginTime.Time)
+
 	c.AfterLogin()
 
-	fmt.Println(c.UserID)
 	fmt.Println("小花花花花花花花花")
 
 	return
@@ -1157,9 +1161,13 @@ func (c *GameClient) AfterLogin() (err error) {
 		}
 		c.user = user
 	}
-	fmt.Println(c.user.GuajiProfile)
+	fmt.Println(c.user.GuajiSettlement)
 	fmt.Println(c.user.LoginTime.Time)
 	fmt.Println("我是哈哈啊啊啊啊啊啊啊-----")
+	err = c.LoadGuajiProfile()
+	if err != nil {
+		return
+	}
 	//send message
 	err = c.PushRoleInfo()
 	if err != nil {
@@ -1170,10 +1178,7 @@ func (c *GameClient) AfterLogin() (err error) {
 	if err != nil {
 		return
 	}
-	err = c.LoadGuajiProfile()
-	if err != nil {
-		return
-	}
+
 	return
 }
 
@@ -1191,6 +1196,7 @@ func (c *GameClient) InitializationInfo() (err error) {
 		timestampnow := time.Now().Unix()
 		//上次登陆的时间戳
 		toBeCharge := c.user.LoginTime.Time
+		fmt.Println("++++++++++++++++++________________")
 		fmt.Println(toBeCharge)
 		timeLayout := "2006-01-02 15:04:05"                             //转化所需模板
 		loc, _ := time.LoadLocation("Local")                            //重要：获取时区

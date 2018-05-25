@@ -188,6 +188,7 @@ func LoadUser(userID int) *gameuser.User {
 		"GuajiSettlement", // 8
 		"GuajiProfile",
 		"ClickOutputBox"}...).Result()
+		fmt.Println(result)
 	_ = err
 	_ = result
 	if err != nil {
@@ -294,7 +295,8 @@ func LoadUser(userID int) *gameuser.User {
 			obj := &gameuser.LoginTime{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
-				//user.LoginTime = obj
+				fmt.Println("测试挂机---------------3333")
+				user.LoginTime = obj
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -309,25 +311,14 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.GuajiOutputBox = obj
+				fmt.Println("测试挂机---------------444")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
 		}
 	}
 
-	//ClickOutputBox
-	if result[10] != nil {
-		data, ok := result[10].(string)
-		if ok && data != "" {
-			obj := gameuser.NewClickOutputBox(userID)
-			err := json.Unmarshal([]byte(data), obj)
-			if err == nil {
-				user.ClickOutputBox = obj
-			} else {
-				glog.Warning("json.Unmarshal failed")
-			}
-		}
-	}
+
 	//GuajiSettlement
 	if result[8] != nil {
 		data, ok := result[8].(string)
@@ -336,6 +327,7 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.GuajiSettlement = obj
+				fmt.Println("测试挂机---------------666")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -350,12 +342,29 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.GuajiProfile = obj
+
+			} else {
+				fmt.Println(err)
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+		//ClickOutputBox
+	if result[10] != nil {
+		data, ok := result[10].(string)
+		if ok && data != "" {
+			obj := gameuser.NewClickOutputBox(userID)
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.ClickOutputBox = obj
+				fmt.Println("测试挂机---------------555")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
 		}
 	}
-
+	fmt.Println(user.GuajiProfile)
+	fmt.Println("测试挂机---------------")
 	if user.Profile == nil {
 		user.Profile = gameuser.NewProfile(userID)
 	}

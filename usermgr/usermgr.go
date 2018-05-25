@@ -4,6 +4,7 @@ import (
 	"meatfloss/gameuser"
 	"meatfloss/persistent"
 	"sync"
+	"fmt"
 )
 
 var (
@@ -27,6 +28,7 @@ func GetUser(userID int) *gameuser.User {
 	allUsersLock.RUnlock()
 
 	user = persistent.LoadUser(userID)
+	fmt.Println(user.GuajiSettlement)
 	return user
 }
 

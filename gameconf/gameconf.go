@@ -91,7 +91,6 @@ func LoadFromDatabase() (err error) {
 	// 这个放在最后
 	loadSuperGoods()
 	loadGuaji()
-	loadGuaji()
 	loadEmployee()
 	return
 }
