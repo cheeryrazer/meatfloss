@@ -102,7 +102,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		data, err := json.Marshal(user.Layout)
 		if err == nil {
 			glog.Info(string(data))
-			fields["Layout"] = string(data)
+			fields["layout"] = string(data)
 		}
 	}
 
@@ -110,7 +110,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		data, err := json.Marshal(user.LoginTime)
 		if err == nil {
 			glog.Info(string(data))
-			fields["LoginTime"] = string(data)
+			fields["logintime"] = string(data)
 		}
 	}
 
@@ -126,7 +126,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		data, err := json.Marshal(user.ClickOutputBox)
 		if err == nil {
 			glog.Info(string(data))
-			fields["ClickOutputBox"] = string(data)
+			fields["clickoutputbox"] = string(data)
 		}
 	}
 
@@ -182,12 +182,12 @@ func LoadUser(userID int) *gameuser.User {
 		"taskbox",         // 2
 		"newsbox",         // 3
 		"eventbox",        // 4
-		"Layout",          // 5
-		"LoginTime",       // 6
-		"GuajiOutputBox",  // 7
-		"GuajiSettlement", // 8
-		"GuajiProfile",
-		"ClickOutputBox"}...).Result()
+		"layout",          // 5
+		"logintime",       // 6
+		"guajioutputbox",  // 7
+		"guajisettlement", // 8
+		"guajiprofile",
+		"clickoutputbox"}...).Result()
 		fmt.Println(result)
 	_ = err
 	_ = result
