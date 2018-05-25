@@ -171,7 +171,7 @@ func (c *GameClient) checkGuajiOutput() {
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
 		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
-		if (timestamp - sr) < 10 {
+		if (timestamp - sr) < 20 {
 			return
 		}
 	}
@@ -494,6 +494,13 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 			//}(a)
 		}
 	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 	c.SendMsg(reply)
 	return
 }
@@ -561,6 +568,57 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		runtime.Gosched()
 	}
 	fmt.Println(len(layout.Employee))
+
+	var num int = len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	var numB int = len(c.user.Bag.BagEmployee)
+	if num == 0 && numB == 0 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+	if num != 0 {
+		//工作的
+		for a := 0; a < numB; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.Bag.BagEmployee[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
+			//}(a)
+		}
+	}
+	if numB != 0 {
+		//背包
+		for a := 0; a < num; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.GuajiProfile.EmployeeBox.EmployeesInfo[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeWork = append(reply.Data.EmployeeWork, myEmployee)
+			//}(a)
+		}
+	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
+
 	c.SendMsg(reply)
 	c.persistEmployee()
 	c.persistBagBox()
@@ -634,14 +692,20 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 	//Events: = make([]common.EventInfo, 0)
 
 	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
-	reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
+	//reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
-	for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
-		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
+
+	for i := len(c.user.GuajiOutputBox.GuajiOutputs) - 1; i >= 0; i-- {
+		guajiOutput := &common.GuajiOutputInfo{}
+		guajiOutput.UserID = c.user.GuajiOutputBox.GuajiOutputs[i].UserID
+		guajiOutput.Type = c.user.GuajiOutputBox.GuajiOutputs[i].Type
+		guajiOutput.Name = c.user.GuajiOutputBox.GuajiOutputs[i].Name
+		guajiOutput.Time = string([]byte(c.user.GuajiOutputBox.GuajiOutputs[i].Time)[:16])
+		guajiOutput.Items = c.user.GuajiOutputBox.GuajiOutputs[i].Items
+		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, guajiOutput)
 	}
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	c.SendMsg(reply)
-
 	return
 }
 
@@ -967,10 +1031,12 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
-	err = c.AfterLogin()
-	c.persistLoginTime()
+
+	c.AfterLogin()
+
 	fmt.Println(c.UserID)
 	fmt.Println("小花花花花花花花花")
+
 	return
 }
 
@@ -1064,6 +1130,7 @@ func (c *GameClient) persistPick() {
 	persistent.AddUser(c.UserID, newUser)
 }
 func (c *GameClient) persistLoginTime() {
+
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
 	cpy := deepcopy.Copy(c.user.LoginTime)
@@ -1112,9 +1179,11 @@ func (c *GameClient) AfterLogin() (err error) {
 
 // InitializationInfo ...
 func (c *GameClient) InitializationInfo() (err error) {
-
+	fmt.Println(c.user.LoginTime.Time)
+	fmt.Println("______+++_____")
 	//第一次就初始化等级为1
 	if c.user.LoginTime.Time == "" {
+		fmt.Println("+++++++++++")
 		c.user.Profile.Level = 1
 	} else {
 		//不是第一次登陆，查看上次的登陆时间，如果差值大于一天，取上限24小时，否则，取上次的登陆时间进行运算
@@ -1219,6 +1288,9 @@ func (c *GameClient) InitializationInfo() (err error) {
 		c.persistGuajiProfile()
 		c.persistOutput()
 	}
+
+	c.user.LoginTime.Time = time.Now().Format("2006-01-02 15:04:05")
+	c.persistLoginTime()
 	return
 }
 
