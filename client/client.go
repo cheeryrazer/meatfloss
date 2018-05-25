@@ -152,7 +152,7 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	//	c.checkGuajiOutput()
+	c.checkGuajiOutput()
 	c.coolTemperature()
 }
 
@@ -987,6 +987,7 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 
 // HandleLoginReq ...
 func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
 	if c.logined {
 		// multiple login disallowed.
 		return
@@ -1037,9 +1038,12 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
 
+	// fmt.Println(c.user.GuajiProfile)
+
+	// fmt.Println(c.user.LoginTime.Time)
+
 	c.AfterLogin()
 
-	fmt.Println(c.UserID)
 	fmt.Println("小花花花花花花花花")
 
 	return
@@ -1078,6 +1082,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// }
 
 	c.persistClikOutput()
+	gameredis.PersistUser(c.user.UserID, c.user)
 	fmt.Println((c.user.ClickOutputBox))
 	c.SendMsg(reply)
 
@@ -1161,6 +1166,13 @@ func (c *GameClient) AfterLogin() (err error) {
 		}
 		c.user = user
 	}
+	fmt.Println(c.user.GuajiSettlement)
+	fmt.Println(c.user.LoginTime.Time)
+	fmt.Println("我是哈哈啊啊啊啊啊啊啊-----")
+	err = c.LoadGuajiProfile()
+	if err != nil {
+		return
+	}
 	//send message
 	err = c.PushRoleInfo()
 	if err != nil {
@@ -1171,6 +1183,7 @@ func (c *GameClient) AfterLogin() (err error) {
 	if err != nil {
 		return
 	}
+
 	return
 }
 
@@ -1187,6 +1200,8 @@ func (c *GameClient) InitializationInfo() (err error) {
 		timestampnow := time.Now().Unix()
 		//上次登陆的时间戳
 		toBeCharge := c.user.LoginTime.Time
+		fmt.Println("++++++++++++++++++________________")
+		fmt.Println(toBeCharge)
 		timeLayout := "2006-01-02 15:04:05"                             //转化所需模板
 		loc, _ := time.LoadLocation("Local")                            //重要：获取时区
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
@@ -1289,6 +1304,40 @@ func (c *GameClient) InitializationInfo() (err error) {
 	return
 }
 
+//  LoadGuajiProfile ...
+func (c *GameClient) LoadGuajiProfile() (err error) {
+	// redis取出温度计算温度
+	timeNow := time.Now().Unix()
+	if c.user.GuajiProfile.CDTemperature > 0 {
+		//取出当前的等级
+		userProfile := c.user.Profile
+		//根据等级取出当前的机器的结算数据
+		machine := gameconf.AllGuajis
+		// 默认等级0+1
+		machineInfo := machine[userProfile.Level+1]
+		//取出机器温度
+		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+		if int(timeNow-c.user.GuajiProfile.ClickTime) >= c.user.GuajiProfile.CDTemperature {
+			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+		}
+	} else {
+		TimeDecr := timeNow - c.user.GuajiProfile.ClickTime
+		//取出当前的等级
+		userProfile := c.user.Profile
+		//根据等级取出当前的机器的结算数据
+		machine := gameconf.AllGuajis
+		// 默认等级0+1
+		machineInfo := machine[userProfile.Level+1]
+		c.user.GuajiProfile.CurrentTemperature -= float64(TimeDecr / int64(machineInfo.CDPerDegree))
+		if c.user.GuajiProfile.CurrentTemperature < float64(machineInfo.InitialTemperature) {
+			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+		}
+		fmt.Println(c.user.GuajiProfile.CurrentTemperature)
+		fmt.Println("")
+	}
+	return
+}
+
 // PushSettlement ...
 func (c *GameClient) PushSettlement() (err error) {
 
@@ -1339,16 +1388,6 @@ func (c *GameClient) PushSettlement() (err error) {
 		guajisettlement.PositiveOutput = machineInfo.PositiveOutput
 		guajisettlement.Probability1 = machineInfo.Probability1
 		guajisettlement.Probability2 = machineInfo.Probability2
-	}
-	if c.user.GuajiProfile.CurrentTemperature == 0 {
-		//取出当前的等级
-		userProfile := c.user.Profile
-		//根据等级取出当前的机器的结算数据
-		machine := gameconf.AllGuajis
-		// 默认等级0+1
-		machineInfo := machine[userProfile.Level+1]
-		//取出机器温度
-		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
 	}
 
 	return
