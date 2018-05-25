@@ -171,7 +171,7 @@ func (c *GameClient) checkGuajiOutput() {
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
 		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
-		if (timestamp - sr) < 10 {
+		if (timestamp - sr) < 20 {
 			return
 		}
 	}
@@ -634,14 +634,20 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 	//Events: = make([]common.EventInfo, 0)
 
 	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
-	reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
+	//reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
-	for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
-		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
+
+	for i := len(c.user.GuajiOutputBox.GuajiOutputs) - 1; i >= 0; i-- {
+		guajiOutput := &common.GuajiOutputInfo{}
+		guajiOutput.UserID = c.user.GuajiOutputBox.GuajiOutputs[i].UserID
+		guajiOutput.Type = c.user.GuajiOutputBox.GuajiOutputs[i].Type
+		guajiOutput.Time = c.user.GuajiOutputBox.GuajiOutputs[i].Time
+		guajiOutput.Name = c.user.GuajiOutputBox.GuajiOutputs[i].Name
+		guajiOutput.Items = c.user.GuajiOutputBox.GuajiOutputs[i].Items
+		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, guajiOutput)
 	}
 	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	c.SendMsg(reply)
-
 	return
 }
 

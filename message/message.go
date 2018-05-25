@@ -383,8 +383,7 @@ const MsgTypeOutputNotify int32 = 3500
 type OutputNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		//	Outputs []*common.OutputInfo `json:"outputs"`
-		GuajiOutputs []common.GuajiOutputInfo `json:"outputs"`
+		GuajiOutputs []*common.GuajiOutputInfo `json:"outputs"`
 	} `json:"data"`
 }
 
@@ -435,30 +434,33 @@ const MsgTypeClickOutputReq int32 = 6000
 type ClickOutputReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		GoodID string `json:"goodId"` // 物品Id
+		GoodID      string  `json:"goodId"`      // 物品Id
 		Temperature float64 `json:"temperature"` // 温度
-		Num string  `json:"num"` // 物品数
-		CD int `json:"cd"` // 机器过热cd
-		Percent float64 `json:"percent"` // 温度百分比
+		Num         string  `json:"num"`         // 物品数
+		CD          int     `json:"cd"`          // 机器过热cd
+		Percent     float64 `json:"percent"`     // 温度百分比
 	} `json:"data"`
 }
+
 // MsgTypePickReq ...
- const MsgTypePickReq int32 = 7000
+const MsgTypePickReq int32 = 7000
+
 //  PickReq ...
- type PickReq struct {
+type PickReq struct {
 	Meta ReplyMetaData `json:"meta"`
-	Data     struct {
+	Data struct {
 		GoodID string `json:"goodId"` // 物品Id
-		Num string  `json:"num"` // 物品数
-		Status int `json:"status"` // 状态
+		Num    string `json:"num"`    // 物品数
+		Status int    `json:"status"` // 状态
 	} `json:"data"`
 }
+
 // ClickStatusReq ...
 type ClickStatusReq struct {
-
-		Status int `json:"status"` // 物品Id
+	Status int `json:"status"` // 物品Id
 
 }
+
 // +++++++++++++
 // common structs
 // 下面的都是子结构体
