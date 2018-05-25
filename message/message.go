@@ -407,7 +407,9 @@ const MsgEmployeeAdjustNotify int32 = 3570
 type EmployeeAdjustNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Employee []*Employeeinfo `json:"employeeadjust"`
+		EmployeeWork []*Employeeinfo        `json:"employeeWork"`
+		EmployeeBack []*Employeeinfo        `json:"employeeBack"`
+		Machine      []*RoleGuajiSettlement `json:"machine"`
 	} `json:"data"`
 }
 
@@ -419,8 +421,9 @@ const MsgMyEmployeeNotify int32 = 3580
 type MyEmployeeNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		EmployeeWork []*Employeeinfo `json:"employeeWork"`
-		EmployeeBack []*Employeeinfo `json:"employeeBack"`
+		EmployeeWork []*Employeeinfo        `json:"employeeWork"`
+		EmployeeBack []*Employeeinfo        `json:"employeeBack"`
+		Machine      []*RoleGuajiSettlement `json:"machine"`
 	} `json:"data"`
 }
 

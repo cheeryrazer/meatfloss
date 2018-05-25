@@ -494,6 +494,13 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 			//}(a)
 		}
 	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 	c.SendMsg(reply)
 	return
 }
@@ -561,6 +568,57 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		runtime.Gosched()
 	}
 	fmt.Println(len(layout.Employee))
+
+	var num int = len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
+	var numB int = len(c.user.Bag.BagEmployee)
+	if num == 0 && numB == 0 {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+	if num != 0 {
+		//工作的
+		for a := 0; a < numB; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.Bag.BagEmployee[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
+			//}(a)
+		}
+	}
+	if numB != 0 {
+		//背包
+		for a := 0; a < num; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.GuajiProfile.EmployeeBox.EmployeesInfo[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeWork = append(reply.Data.EmployeeWork, myEmployee)
+			//}(a)
+		}
+	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
+
 	c.SendMsg(reply)
 	c.persistEmployee()
 	c.persistBagBox()
