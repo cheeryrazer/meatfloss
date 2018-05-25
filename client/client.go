@@ -641,8 +641,8 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 		guajiOutput := &common.GuajiOutputInfo{}
 		guajiOutput.UserID = c.user.GuajiOutputBox.GuajiOutputs[i].UserID
 		guajiOutput.Type = c.user.GuajiOutputBox.GuajiOutputs[i].Type
-		guajiOutput.Time = c.user.GuajiOutputBox.GuajiOutputs[i].Time
 		guajiOutput.Name = c.user.GuajiOutputBox.GuajiOutputs[i].Name
+		guajiOutput.Time = string([]byte(c.user.GuajiOutputBox.GuajiOutputs[i].Time)[:16])
 		guajiOutput.Items = c.user.GuajiOutputBox.GuajiOutputs[i].Items
 		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, guajiOutput)
 	}
