@@ -8,7 +8,7 @@ type GuajiProfile struct {
 	TemperaturePercent	float64 //温度百分比
 	CDTemperature		int //剩余冷却时间
 	CDPick 				int //剩余捡起时间
-
+	ClickTime			int64 //温度产生时间
 
 }
 

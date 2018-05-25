@@ -12,6 +12,7 @@ import (
 
 // RandOutputInfo ...
 func RandOutputInfo(c *gameuser.User) (err error) {
+	c.GuajiProfile.ClickTime= time.Now().Unix()
 	fmt.Println(c.GuajiProfile.CurrentTemperature)
 	//取出当前的等级
 	userProfile := c.Profile
@@ -41,7 +42,6 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 	if c.GuajiProfile.CurrentTemperature >= float64(machineInfo.MaxTemperature) {
 		// c.GuajiProfile.CDTemperature =machineInfo.CD
 		// 11111
-		fmt.Println("suc")
 		c.GuajiProfile.CDTemperature = 10
 		c.ClickOutputBox.ClickOutput = &common.ClickOutputInfo{}
 		c.GuajiProfile.CurrentTemperature = float64(machineInfo.MaxTemperature)
