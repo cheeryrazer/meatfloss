@@ -152,7 +152,7 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	c.checkGuajiOutput()
+	//	c.checkGuajiOutput()
 	c.coolTemperature()
 }
 
@@ -500,6 +500,8 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
 	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
 	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	myEmployee.MachineLevel = gameconf.AllGuajis[c.user.Profile.Level].MachineLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.Profile.Level].MachineImage
 	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 	c.SendMsg(reply)
 	return
@@ -617,6 +619,8 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
 	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
 	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
+	myEmployee.MinLevel = gameconf.AllGuajis[c.user.Profile.Level].MinLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.Profile.Level].MachineImage
 	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 
 	c.SendMsg(reply)
@@ -1019,6 +1023,7 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 			c.SendMsg(reply)
 			return errors.New("Authorize failed")
 		}
+
 		err = c.InitUser(userID)
 		if err != nil {
 			glog.Errorf("InitRole failed, userID: %d", userID)
@@ -1173,10 +1178,9 @@ func (c *GameClient) AfterLogin() (err error) {
 func (c *GameClient) InitializationInfo() (err error) {
 	fmt.Println(c.user.LoginTime.Time)
 	fmt.Println("______+++_____")
-	//第一次就初始化等级为1
+	//第一次登陆不计算
 	if c.user.LoginTime.Time == "" {
 		fmt.Println("+++++++++++")
-		c.user.Profile.Level = 1
 	} else {
 		//不是第一次登陆，查看上次的登陆时间，如果差值大于一天，取上限24小时，否则，取上次的登陆时间进行运算
 		//当前的时间戳
@@ -1458,12 +1462,18 @@ func (c *GameClient) PushRoleInfo() (err error) {
 
 // InitUser ...
 func (c *GameClient) InitUser(userID int) (err error) {
+
+	//c.user.Profile.Level = 1
 	user := gameuser.NewUser(userID)
 	// TODO, init user.
 	c.user = user
-
+	//初始化等级为一
+	c.user.Profile.Level = 1
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
+	fmt.Println("+++++++++++++++")
+	fmt.Println(newUser)
+	fmt.Println("+++++++++++++++")
 	_ = newUser
 	persistent.AddUser(userID, newUser)
 	return

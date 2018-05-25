@@ -184,12 +184,14 @@ func LoadUser(userID int) *gameuser.User {
 		"eventbox",        // 4
 		"Layout",          // 5
 		"LoginTime",       // 6
-		"GuajiOutputBox",  // 7
-		"GuajiSettlement", // 8
-		"GuajiProfile",
-		"ClickOutputBox"}...).Result()
+		"guajiOutputBox",  // 7
+		"guajiSettlement", // 8
+		"guajiProfile",    //9
+		"clickOutputBox"}...).Result()
 	_ = err
 	_ = result
+
+	fmt.Println(result)
 	if err != nil {
 		glog.Errorf("LoadUser from redis failed!")
 		return nil
@@ -294,7 +296,7 @@ func LoadUser(userID int) *gameuser.User {
 			obj := &gameuser.LoginTime{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
-				//user.LoginTime = obj
+				user.LoginTime = obj
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
