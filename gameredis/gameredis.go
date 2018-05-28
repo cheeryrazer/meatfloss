@@ -188,7 +188,7 @@ func LoadUser(userID int) *gameuser.User {
 		"guajisettlement", // 8
 		"guajiprofile",
 		"clickoutputbox"}...).Result()
-		fmt.Println(result)
+	fmt.Println(result)
 	_ = err
 	_ = result
 	if err != nil {
@@ -318,7 +318,6 @@ func LoadUser(userID int) *gameuser.User {
 		}
 	}
 
-
 	//GuajiSettlement
 	if result[8] != nil {
 		data, ok := result[8].(string)
@@ -349,7 +348,7 @@ func LoadUser(userID int) *gameuser.User {
 			}
 		}
 	}
-		//ClickOutputBox
+	//ClickOutputBox
 	if result[10] != nil {
 		data, ok := result[10].(string)
 		if ok && data != "" {
