@@ -437,11 +437,13 @@ const MsgTypeClickOutputReq int32 = 6000
 type ClickOutputReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		GoodID      string  `json:"goodId"`      // 物品Id
-		Temperature float64 `json:"temperature"` // 温度
-		Num         string  `json:"num"`         // 物品数
-		CD          int     `json:"cd"`          // 机器过热cd
-		Percent     float64 `json:"percent"`     // 温度百分比
+		Output struct {
+			GoodID      string  `json:"goodId"`      // 物品Id
+			Temperature float64 `json:"temperature"` // 温度
+			Num         string  `json:"num"`         // 物品数
+			CD          int     `json:"cd"`          // 机器过热cd
+			Percent     float64 `json:"percent"`     // 温度百分比
+		} `json:"output"`
 	} `json:"data"`
 }
 
@@ -636,3 +638,8 @@ type EmployeeinfoId struct {
 type EmployeeinfoId1 struct {
 	Number string // 编号
 }
+
+// // ClickOutputs ...
+// type ClickOutputs struct {
+
+// }

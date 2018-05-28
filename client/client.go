@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
+	"sort"
 	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
 	"github.com/mohae/deepcopy"
@@ -928,6 +928,53 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 	return
 }
 
+// AddExpToUser ...
+func (c *GameClient) AddExpToUser(exp int) {
+	nowExp := c.user.Profile.Experience + exp
+	// nextExp:=AllHierarchical[c.user.Profile.Level+1]
+	var AllHierarchicals []int
+
+	for _, v := range gameconf.AllHierarchical {
+		AllHierarchicals = append(AllHierarchicals, v.EssentialExperience)
+	}
+
+	// for i:=0;i<le-1;i++{
+	// 	if AllHierarchicals[i]>AllHierarchicals[i+1]{
+	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
+	// 		AllHierarchicals[i+1]= AllHierarchicals[i]-AllHierarchicals[i+1]
+	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
+	// 	}
+	// }
+	fmt.Println("---22---22--2")
+	fmt.Println(nowExp)
+	sort.Ints(AllHierarchicals)
+	for index, v := range AllHierarchicals {
+		if index>=c.user.Profile.Level{
+			if nowExp>=v{
+				c.lock.Lock()
+				c.user.Profile.Experience = nowExp-v
+				c.user.Profile.Level =(index+1)
+				c.lock.Unlock()
+			}else{
+				c.user.Profile.Experience = nowExp
+				break
+			}
+		}
+
+	}
+	c.persistProfile()
+	return
+}
+func (c *GameClient) persistProfile() (err error) {
+	newProfile := &gameuser.User{}
+	newProfile.UserID = c.UserID
+	cpy := deepcopy.Copy(c.user.Profile)
+	profile, _ := cpy.(*gameuser.Profile)
+	newProfile.Profile = profile
+	persistent.AddUser(c.UserID, newProfile)
+	return
+}
+
 // OnFinishRandomEvent ...
 func (c *GameClient) OnFinishRandomEvent(eventInfo *message.EventInfo) {
 
@@ -1066,11 +1113,11 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	//消息的推送
 	//Events: = make([]common.EventInfo, 0)
 	logic.RandOutputInfo(c.user)
-	reply.Data.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
-	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
-	reply.Data.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
-	reply.Data.CD = c.user.GuajiProfile.CDTemperature
-	reply.Data.Percent = c.user.GuajiProfile.TemperaturePercent
+	reply.Data.Output.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
+	reply.Data.Output.Temperature = c.user.GuajiProfile.CurrentTemperature
+	reply.Data.Output.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
+	reply.Data.Output.CD = c.user.GuajiProfile.CDTemperature
+	reply.Data.Output.Percent = c.user.GuajiProfile.TemperaturePercent
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
@@ -1116,18 +1163,15 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 func (c *GameClient) persistPick() {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
-	if c.user.Bag != nil {
-		for _, v := range c.user.Bag.Cells {
-			if v.GoodsID == c.user.ClickOutputBox.ClickOutput.GoodID {
-				fmt.Println("你好啊啊啊啊啊")
-				num, err := strconv.Atoi(c.user.ClickOutputBox.ClickOutput.GoodNum)
-				if err == nil {
-					v.Count += num
-				}
-
-			}
-		}
+	var goodsIDs []string
+	var goodsCounts []int
+	goodsIDs = append(goodsIDs, c.user.ClickOutputBox.ClickOutput.GoodID)
+	num, err := strconv.Atoi(c.user.ClickOutputBox.ClickOutput.GoodNum)
+	if err != nil {
+		fmt.Println("fail")
 	}
+	goodsCounts = append(goodsCounts, num)
+	c.PutToBagBatch(goodsIDs, goodsCounts)
 	cpy := deepcopy.Copy(c.user.Bag)
 	newUserBag, _ := cpy.(*common.Bag)
 	newUser.Bag = newUserBag
@@ -1312,9 +1356,14 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 		// 默认等级0+1
 		machineInfo := machine[userProfile.Level+1]
 		//取出机器温度
-		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+		fmt.Println(c.user.GuajiProfile.CurrentTemperature)
+		fmt.Println("测试----！")
+		// c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
 		if int(timeNow-c.user.GuajiProfile.ClickTime) >= c.user.GuajiProfile.CDTemperature {
 			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
+			c.user.GuajiProfile.CDTemperature = 0
+		} else {
+			c.user.GuajiProfile.CDTemperature = int(timeNow - c.user.GuajiProfile.ClickTime)
 		}
 	} else {
 		TimeDecr := timeNow - c.user.GuajiProfile.ClickTime
@@ -1329,7 +1378,7 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
 		}
 		fmt.Println(c.user.GuajiProfile.CurrentTemperature)
-		fmt.Println("")
+		fmt.Println("测试----！!!!!")
 	}
 	return
 }

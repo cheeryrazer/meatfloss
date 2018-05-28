@@ -33,6 +33,8 @@ var (
 	AllGuajis map[int]*Guaji
 	// AllEmployees ...
 	AllEmployees map[string]*Employee
+	// AllHierarchical ...
+	AllHierarchical map[int]*Hierarchical
 )
 
 func init() {
@@ -46,7 +48,7 @@ func init() {
 	AllNPCGuests = make(map[string]*NPCGuest)
 	AllGuajis = make(map[int]*Guaji)
 	AllEmployees = make(map[string]*Employee)
-
+	AllHierarchical = make(map[int]*Hierarchical)
 }
 
 // SuperGoods ...
@@ -92,6 +94,7 @@ func LoadFromDatabase() (err error) {
 	loadSuperGoods()
 	loadGuaji()
 	loadEmployee()
+	loadHierarchical()
 	return
 }
 
@@ -755,5 +758,37 @@ func loadEmployee() (err error) {
 		AllEmployees[employee.Number] = employee
 	}
 	utils.PrintJSON(AllEmployees)
+	return
+}
+
+// Hierarchical ...
+type Hierarchical struct {
+	Level               int    //等级
+	EssentialExperience int    // 所需经验值
+	OpenFunction        string // 开启功能
+	OpenFurniture       string // 开启制作家具
+	OpenClothing        string // 开启制作服饰
+	OpendEvent          string // 开启的事件
+	Reward              string // 奖励
+}
+
+func loadHierarchical() (err error) {
+	dbHierarchical, err := db.LoadHierarchical()
+	if err != nil {
+		return
+	}
+	for _, row := range dbHierarchical {
+		hierarchical := &Hierarchical{
+			Level:               row.Lv,
+			EssentialExperience: row.Exp,
+			OpenFunction:        row.Gongneng,
+			OpenFurniture:       row.Jiaju,
+			OpenClothing:        row.Fushi,
+			OpendEvent:          row.Shjian,
+			Reward:              row.Jiangli}
+		AllHierarchical[hierarchical.Level] = hierarchical
+	}
+	fmt.Println("你好吗21212")
+	utils.PrintJSON(AllHierarchical)
 	return
 }
