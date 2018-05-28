@@ -152,7 +152,7 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	c.checkGuajiOutput()
+	//	c.checkGuajiOutput()
 	c.coolTemperature()
 }
 
@@ -462,23 +462,6 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 	}
 	if num != 0 {
 		//工作的
-		for a := 0; a < numB; a++ {
-			//	go func(who int) {
-			myEmployee := &message.Employeeinfo{}
-			numid := c.user.Bag.BagEmployee[a].EmployeesID
-			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
-			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
-			myEmployee.Number = gameconf.AllEmployees[numid].Number
-			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
-			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
-			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
-			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
-			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
-			//}(a)
-		}
-	}
-	if numB != 0 {
-		//背包
 		for a := 0; a < num; a++ {
 			//	go func(who int) {
 			myEmployee := &message.Employeeinfo{}
@@ -491,6 +474,23 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
 			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
 			reply.Data.EmployeeWork = append(reply.Data.EmployeeWork, myEmployee)
+			//}(a)
+		}
+	}
+	if numB != 0 {
+		//背包
+		for a := 0; a < numB; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.Bag.BagEmployee[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
 			//}(a)
 		}
 	}
@@ -534,6 +534,7 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 
 	cpy := deepcopy.Copy(req.Data.EmployeeAdjust)
 	layout, _ := cpy.(*message.EmployeeAdjust)
+
 	//加入工作中
 	if len(layout.Employee) > 0 {
 		c.user.GuajiProfile.EmployeeBox.EmployeesInfo = make([]*common.EmployeesInfo, 0)
@@ -542,8 +543,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			go func(who int) {
 				onet := &common.EmployeesInfo{}
 				onet.EmployeesID = layout.Employee[who]
-				fmt.Println("+++++++++++++++++++")
-				fmt.Println(layout.Employee[who])
 				c.user.GuajiProfile.EmployeeBox.EmployeesInfo = append(c.user.GuajiProfile.EmployeeBox.EmployeesInfo, onet)
 
 				time.Sleep(10 * time.Nanosecond)
@@ -559,20 +558,20 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		for a := len(layout.Back); a >= 1; a-- {
 			go func(who int) {
 				onet := &common.EmployeesInfo{}
-				onet.EmployeesID = layout.Employee[who]
-				fmt.Println("+++++++++++++++++++")
-				fmt.Println(layout.Employee[who])
+				onet.EmployeesID = layout.Back[who]
 				c.user.Bag.BagEmployee = append(c.user.Bag.BagEmployee, onet)
 
 				time.Sleep(10 * time.Nanosecond)
 			}(a)
 		}
+
 		runtime.Gosched()
 	}
 	fmt.Println(len(layout.Employee))
 
 	var num int = len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo)
 	var numB int = len(c.user.Bag.BagEmployee)
+
 	if num == 0 && numB == 0 {
 		reply.Meta.Error = true
 		reply.Meta.ErrorMessage = "invalid request"
@@ -581,23 +580,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 	}
 	if num != 0 {
 		//工作的
-		for a := 0; a < numB; a++ {
-			//	go func(who int) {
-			myEmployee := &message.Employeeinfo{}
-			numid := c.user.Bag.BagEmployee[a].EmployeesID
-			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
-			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
-			myEmployee.Number = gameconf.AllEmployees[numid].Number
-			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
-			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
-			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
-			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
-			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
-			//}(a)
-		}
-	}
-	if numB != 0 {
-		//背包
 		for a := 0; a < num; a++ {
 			//	go func(who int) {
 			myEmployee := &message.Employeeinfo{}
@@ -610,6 +592,23 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
 			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
 			reply.Data.EmployeeWork = append(reply.Data.EmployeeWork, myEmployee)
+			//}(a)
+		}
+	}
+	if numB != 0 {
+		//背包
+		for a := 0; a < numB; a++ {
+			//	go func(who int) {
+			myEmployee := &message.Employeeinfo{}
+			numid := c.user.Bag.BagEmployee[a].EmployeesID
+			myEmployee.Speed = gameconf.AllEmployees[numid].Speed
+			myEmployee.Quality = gameconf.AllEmployees[numid].Quality
+			myEmployee.Number = gameconf.AllEmployees[numid].Number
+			myEmployee.Luck = gameconf.AllEmployees[numid].Luck
+			myEmployee.Introdution = gameconf.AllEmployees[numid].Introdution
+			myEmployee.EmployeeName = gameconf.AllEmployees[numid].EmployeeName
+			myEmployee.AvatarImage = gameconf.AllEmployees[numid].AvatarImage
+			reply.Data.EmployeeBack = append(reply.Data.EmployeeBack, myEmployee)
 			//}(a)
 		}
 	}

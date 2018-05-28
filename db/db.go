@@ -593,3 +593,44 @@ func LoadEmployee() ([]*TblEmployee, error) {
 
 	return res, nil
 }
+
+// TblHierarchical represents a row from 'meatfloss.tbl_hierarchical'.
+type TblHierarchical struct {
+	Lv       int    `json:"lv"`       // lv
+	Exp      int    `json:"exp"`      // exp
+	Gongneng string `json:"gongneng"` // gongneng
+	Jiaju    string `json:"jiaju"`    // jiaju
+	Fushi    string `json:"fushi"`    // fushi
+	Shjian   string `json:"shjian"`   // shijian
+	Jiangli  string `json:"jiangli"`  // jiangqi
+}
+
+// LoadHierarchical ...
+func LoadHierarchical() ([]*TblHierarchical, error) {
+	sqlstr := `SELECT ` +
+		`lv, exp, gongneng, jiaju, fushi, shjian, jiangli` +
+		` FROM ` + defaultDbName + `.tbl_hierarchical`
+
+	q, err := db.Query(sqlstr)
+	if err != nil {
+		return nil, err
+	}
+
+	defer q.Close()
+
+	// load results
+	var res []*TblHierarchical
+	for q.Next() {
+		te := TblHierarchical{}
+
+		// scan
+		err = q.Scan(&te.Lv, &te.Exp, &te.Gongneng, &te.Jiaju, &te.Fushi, &te.Shjian, &te.Jiangli)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &te)
+	}
+
+	return res, nil
+}
