@@ -427,6 +427,22 @@ type MyEmployeeNotify struct {
 	} `json:"data"`
 }
 
+// MsgMyUpgradeNotify ...
+const MsgMyUpgradeNotify int32 = 3810
+
+// UpgradeNotify ...
+//  升级的主动推送
+type UpgradeNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		// EmployeeWork []*Employeeinfo        `json:"employeeWork"`
+		// EmployeeBack []*Employeeinfo        `json:"employeeBack"`
+		// Machine      []*RoleGuajiSettlement `json:"machine"`
+		Upgrade     string
+		UpgradeTime int
+	} `json:"data"`
+}
+
 // +++++++++++++
 
 // MsgTypeClickOutputReq ...

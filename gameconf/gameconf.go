@@ -675,7 +675,7 @@ func loadGuaji() (err error) {
 			Upmaterial:          row.Sjcl,
 			Uptime:              row.Time,
 			Outputs:             make([]message.Reward, 3),
-			Guajis:              make([]message.Guaji, 2)}
+			Guajis:              make([]message.Guaji, 1)}
 		guajiStrList := []string{row.Zhengxiang, row.Fuxiang, row.Bjcc}
 		expList := []int{row.Gailv1, row.Gailv2, row.Bjgl}
 		for i, str := range guajiStrList {
@@ -701,7 +701,7 @@ func loadGuaji() (err error) {
 			obj.Outputs[i] = oneReward
 		}
 
-		guajiStrListSingle := []string{row.Djcc, row.Sjcl}
+		guajiStrListSingle := []string{row.Sjcl}
 		for i, str := range guajiStrListSingle {
 			_ = str
 			// for examples, str = wp0001;1000|wp0002;1000

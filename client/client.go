@@ -152,8 +152,67 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	//	c.checkGuajiOutput()
+	c.checkGuajiOutput()
 	c.coolTemperature()
+	c.checkUpgrade()
+}
+
+func (c *GameClient) checkUpgrade() {
+	machine := c.user.GuajiProfile
+	//判定是否处在升级中
+	if machine.Upgrade == 1 {
+		machine.UpgradeTime -= 1
+		fmt.Println(gameconf.AllGuajis[machine.MachineLevel].Guajis[0].List[0].GoodsID)
+		msg := &message.UpgradeNotify{}
+		msg.Meta.MessageType = "UpgradeNotify"
+		msg.Meta.MessageTypeID = message.MsgMyUpgradeNotify
+		msg.Meta.MessageSequenceID = 199
+		msg.Data.Upgrade = "正在升级中"
+		msg.Data.UpgradeTime = machine.UpgradeTime
+		c.SendMsg(msg)
+		c.persistGuajiProfile()
+		//如果时间到了，更改状态不在更新的状态
+		if machine.UpgradeTime <= 0 {
+			machine.Upgrade = 2
+		}
+		return
+	}
+
+	//根据当前机器的等级，员工的等级，还有所获的奖励进行升级的判定
+	//根据机器的等级，查询升级所需要的要求
+
+	fmt.Println(len(gameconf.AllGuajis[machine.MachineLevel].Guajis[0].List))
+	//首先判断员工的等级是否达到
+	if gameconf.AllGuajis[machine.MachineLevel].MinLevel > c.user.Profile.Level {
+		//员工的等级没有达到
+		return
+	}
+	machineNeed := gameconf.AllGuajis[machine.MachineLevel].Guajis[0].List
+	//判断升级需要的材料
+	if len(machineNeed) >= 0 {
+		//循环在背包比较需要的材料，背包中的数量是否满足
+		for goodsId, goods := range machineNeed {
+			_ = goodsId
+			if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
+				return
+			}
+
+		}
+	}
+	//更改背包中的数据
+	if len(machineNeed) >= 0 {
+		//更改升级材料
+		for goodsId, goods := range machineNeed {
+			_ = goodsId
+			c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count -= goods.GoodsNum
+		}
+	}
+	//进入升级
+	machine.MachineLevel += 1
+	machine.Upgrade = 1 //升级中
+	machine.UpgradeTime = gameconf.AllGuajis[machine.MachineLevel].Uptime
+
+	return
 }
 
 func (c *GameClient) checkGuajiOutput() {
@@ -207,8 +266,6 @@ func (c *GameClient) checkGuajiOutput() {
 	//负向的概率
 	var Probability2 int = guajisettlement.Probability2
 	Probability2 -= (guajisettlement.Luck / 10)
-	fmt.Println(Probability1)
-	fmt.Println(Probability2)
 
 	// //根据概率确定
 	// var gailv [5]byte
@@ -239,11 +296,6 @@ func (c *GameClient) checkGuajiOutput() {
 	var coinNum int
 	_ = coinNum
 
-	fmt.Println("_______________")
-	fmt.Println(guajisettlement.Quality)
-	fmt.Println(guajisettlement.Speed)
-	fmt.Println("_______________")
-
 	coinNum = guajisettlement.Quality * guajisettlement.Speed
 	oneEvent := &common.GuajiOutputInfo{}
 	var gailv int
@@ -270,9 +322,12 @@ func (c *GameClient) checkGuajiOutput() {
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 	//用户金币数的增加
-	c.user.GuajiProfile.Coin += coinNum
-	c.persistGuajiProfile()
-	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
+	var goodsIDs []string
+	var goodsCounts []int
+	goodsIDs = append(goodsIDs, "wp0002")
+	goodsCounts = append(goodsCounts, coinNum)
+	c.PutToBagBatch(goodsIDs, goodsCounts)
+	c.persistBagBox()
 	c.persistOutput()
 }
 
@@ -1033,18 +1088,9 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	c.logined = true
 	c.UserID = userID
 	_ = userID
-
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
-
-	// fmt.Println(c.user.GuajiProfile)
-
-	// fmt.Println(c.user.LoginTime.Time)
-
 	c.AfterLogin()
-
-	fmt.Println("小花花花花花花花花")
-
 	return
 }
 
@@ -1165,9 +1211,6 @@ func (c *GameClient) AfterLogin() (err error) {
 		}
 		c.user = user
 	}
-	fmt.Println(c.user.GuajiSettlement)
-	fmt.Println(c.user.LoginTime.Time)
-	fmt.Println("我是哈哈啊啊啊啊啊啊啊-----")
 	err = c.LoadGuajiProfile()
 	if err != nil {
 		return
@@ -1188,8 +1231,6 @@ func (c *GameClient) AfterLogin() (err error) {
 
 // InitializationInfo ...
 func (c *GameClient) InitializationInfo() (err error) {
-	fmt.Println(c.user.LoginTime.Time)
-	fmt.Println("______+++_____")
 	//第一次登陆不计算
 	if c.user.LoginTime.Time == "" {
 		fmt.Println("+++++++++++")
@@ -1290,11 +1331,15 @@ func (c *GameClient) InitializationInfo() (err error) {
 			oneEvent.Items = "产出" + coinNums + "金币"
 			oneEvent.Time = tm.Format("2006-01-02 15:04:05")
 			c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
-			fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 			//用户金币数的增加
-			c.user.GuajiProfile.Coin += coinNum
+			var goodsIDs []string
+			var goodsCounts []int
+			goodsIDs = append(goodsIDs, "wp0002")
+			goodsCounts = append(goodsCounts, coinNum)
+			c.PutToBagBatch(goodsIDs, goodsCounts)
+			c.persistBagBox()
 		}
-		c.persistGuajiProfile()
+		// c.persistGuajiProfile()
 		c.persistOutput()
 	}
 
@@ -1341,18 +1386,18 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 func (c *GameClient) PushSettlement() (err error) {
 
 	//取出当前的等级
-	userProfile := c.user.Profile
-	_ = userProfile
+	userguajiProfile := c.user.GuajiProfile
+	_ = userguajiProfile
 	//根据等级取出当前的机器的结算数据
 	machine := gameconf.AllGuajis
-	machineInfo := machine[userProfile.Level]
+	machineInfo := machine[userguajiProfile.MachineLevel]
 	//判断雇员的索引是为空，不为空的话，查出雇员的信息
 	employer := c.user.GuajiProfile.EmployeeBox
 	//通过匹配等级和雇员的token值判定是否需要更新计算的产出的参数
 	guajisettlement := c.user.GuajiSettlement
 	//guajisettlement.MinLevel
 	EmployeeInfo := gameconf.AllEmployees
-	if employer.EmployeesToken != guajisettlement.SettlementToken || guajisettlement.MachineLevel != userProfile.Level {
+	if employer.EmployeesToken != guajisettlement.SettlementToken || guajisettlement.MachineLevel != userguajiProfile.MachineLevel {
 		//更新需要计算的数据
 		//如果雇员的数量大于0，循环计算出雇员的计算值
 		guajisettlement.Luck = 0
@@ -1361,25 +1406,14 @@ func (c *GameClient) PushSettlement() (err error) {
 
 		guajisettlement.Speed = 0
 		if len(c.user.GuajiProfile.EmployeeBox.EmployeesInfo) > 0 {
-
 			for _, myEmployer := range c.user.GuajiProfile.EmployeeBox.EmployeesInfo {
-
-				fmt.Println("_______________")
-				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Quality)
-				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Speed)
-				fmt.Println(EmployeeInfo[myEmployer.EmployeesID].Luck)
-
-				fmt.Println("_______________")
-
 				guajisettlement.Luck += EmployeeInfo[myEmployer.EmployeesID].Luck
 				guajisettlement.Quality += EmployeeInfo[myEmployer.EmployeesID].Quality
 				guajisettlement.Speed += EmployeeInfo[myEmployer.EmployeesID].Speed
 			}
-
 		}
-
 		guajisettlement.Luck += machineInfo.Luck
-		guajisettlement.MachineLevel = userProfile.Level
+		guajisettlement.MachineLevel = userguajiProfile.MachineLevel
 		guajisettlement.Quality += machineInfo.Quality
 		guajisettlement.SettlementToken = employer.EmployeesToken
 		guajisettlement.Speed += machineInfo.Speed
@@ -1388,7 +1422,6 @@ func (c *GameClient) PushSettlement() (err error) {
 		guajisettlement.Probability1 = machineInfo.Probability1
 		guajisettlement.Probability2 = machineInfo.Probability2
 	}
-
 	return
 }
 
@@ -1505,13 +1538,12 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	user := gameuser.NewUser(userID)
 	// TODO, init user.
 	c.user = user
-	//初始化等级为一
+	//初始员工化等级为一
 	c.user.Profile.Level = 1
+	//初始化机器等级为1
+	c.user.GuajiProfile.MachineLevel = 1
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
-	fmt.Println("+++++++++++++++")
-	fmt.Println(newUser)
-	fmt.Println("+++++++++++++++")
 	_ = newUser
 	persistent.AddUser(userID, newUser)
 	return
