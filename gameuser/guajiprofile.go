@@ -6,7 +6,7 @@ type GuajiProfile struct {
 	Coin               int          //金币
 	MachineLevel       int          // 机器等级
 	UpgradeTime        int          //升级剩余事件
-	Upgrade            int          //1升级中2不是升级中
+	Upgrade            int          //1升级中2不是升级中3表示未开启升级
 	EmployeeBox        *EmployeeBox // 雇员
 	CurrentTemperature float64      //当前温度
 	TemperaturePercent float64      //温度百分比
