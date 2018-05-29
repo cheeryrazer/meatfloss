@@ -259,7 +259,7 @@ func (c *GameClient) checkGuajiOutput() {
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
 		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
-		if (timestamp - sr) < 60 {
+		if (timestamp - sr) < 120 {
 			return
 		}
 	}
@@ -350,6 +350,7 @@ func (c *GameClient) checkGuajiOutput() {
 	oneEvent.Items = "产出" + coinNums + "金币"
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
+	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
 	//用户金币数的增加
 	var goodsIDs []string
 	var goodsCounts []int
