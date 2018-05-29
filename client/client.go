@@ -1744,7 +1744,7 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.Profile.Level = 1
 	//初始化机器等级为1
 	c.user.GuajiProfile.MachineLevel = 1
-	//初始化机器为不能升级
+	//初始化机器为不能升级的
 	c.user.GuajiProfile.Upgrade = 3
 
 	//默认背包中一个雇员
