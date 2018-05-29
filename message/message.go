@@ -491,30 +491,59 @@ type MachineUpgradeNotify struct {
 
 // MsgTypeClickOutputReq ...
 // 点击产出
+
+// ReplyClickOutputReq ...
+type ReplyClickOutputReq struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Output struct {
+			GoodID      string  `json:"goodId"`      // 物品Id
+			Temperature float64 `json:"temperature"` // 温度
+			Num         string  `json:"num"`         // 物品数
+			CD          int     `json:"cd"`          // 机器过热cd
+			Percent     float64 `json:"percent"`     // 温度百分比
+		} `json:"output"`
+	} `json:"data"`
+}
+
 const MsgTypeClickOutputReq int32 = 6000
 
 // ClickOutputReq ...
 type ClickOutputReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Output struct {
+			GoodID      string  `json:"goodId"`      // 物品Id
+			Temperature float64 `json:"temperature"` // 温度
+			Num         string  `json:"num"`         // 物品数
+			CD          int     `json:"cd"`          // 机器过热cd
+			Percent     float64 `json:"percent"`     // 温度百分比
+		} `json:"output"`
+	} `json:"data"`
+}
+
+//  ReplyPickReq ...
+type ReplyPickReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		GoodID      string  `json:"goodId"`      // 物品Id
-		Temperature float64 `json:"temperature"` // 温度
-		Num         string  `json:"num"`         // 物品数
-		CD          int     `json:"cd"`          // 机器过热cd
-		Percent     float64 `json:"percent"`     // 温度百分比
+		Status struct {
+			GoodID string `json:"goodId"` // 物品Id
+			Num    int    `json:"num"`    // 物品数
+			Status int    `json:"status"` // 状态
+		}`json:"status"`
 	} `json:"data"`
 }
 
 // MsgTypePickReq ...
-const MsgTypePickReq int32 = 7000
+//捡起
+const MsgTypePickReq int32 = 7300
 
-//  PickReq ...
+// PickReq ...
 type PickReq struct {
-	Meta ReplyMetaData `json:"meta"`
-	Data struct {
-		GoodID string `json:"goodId"` // 物品Id
-		Num    string `json:"num"`    // 物品数
-		Status int    `json:"status"` // 状态
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		GoodID string `json:"goodId"` // npcId 目前只有一个1
+		Num    int    `json:"num"`    // 物品数
 	} `json:"data"`
 }
 
@@ -696,3 +725,8 @@ type EmployeeinfoId struct {
 type EmployeeinfoId1 struct {
 	Number string // 编号
 }
+
+// // ClickOutputs ...
+// type ClickOutputs struct {
+
+// }
