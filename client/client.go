@@ -646,6 +646,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			return
 		}
 	}
+
 	reply.Meta.Error = true
 	reply.Meta.ErrorMessage = "invalid request"
 	c.SendMsg(reply)
