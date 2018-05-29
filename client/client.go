@@ -116,13 +116,10 @@ func (c *GameClient) coolTemperature() {
 	machine := gameconf.AllGuajis
 	// 默认等级0+1
 	machineInfo := machine[userProfile.Level+1]
-	if c.user.GuajiProfile.CDPick > 1 {
-		c.user.GuajiProfile.CDPick--
-	}
-	if c.user.GuajiProfile.CDPick == 1 {
-		c.user.GuajiProfile.CDPick--
-		c.SendMsg(&message.ClickStatusReq{Status: 1})
-	}
+	// if c.user.GuajiProfile.CDPick > 1 {
+	// 	c.user.GuajiProfile.CDPick--
+	
+	// }
 	// 取出cd
 	cd := c.user.GuajiProfile.CDTemperature
 	if cd == 1 {
@@ -147,8 +144,11 @@ func (c *GameClient) coolTemperature() {
 func (c *GameClient) checkClickoutputs() {
 	fmt.Println("ssdasdadada")
 	timeNow := time.Now().Unix()
-	// c.lock.Lock()
+	fmt.Println(c.user.ClickOutputBox)
 	clickoutputs := c.user.ClickOutputBox.ClickOutputs
+	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
+		return
+	}
 	for i, v := range clickoutputs {
 		if int(timeNow)-v.Time >= 5 {
 			fmt.Println(v.GoodID)
@@ -156,11 +156,14 @@ func (c *GameClient) checkClickoutputs() {
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
+			c.SendMsg(&message.ClickStatusReq{Status: 1,MessageSequenceID:v.MessageSequenceID})
 			c.persistPick(v.GoodID, b)
+			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
+
 		}
 	}
-	// c.lock.Unlock()
+	c.persistClikOutput()
 }
 
 func (c *GameClient) onPeriod() {
@@ -175,8 +178,8 @@ func (c *GameClient) periodCheck() {
 	c.checkTasks()
 	c.checkGuajiOutput()
 	c.coolTemperature()
-	// c.checkClickoutputs()
-	c.checkUpgrade()
+	c.checkClickoutputs()
+	// c.checkUpgrade()
 }
 
 func (c *GameClient) checkUpgrade() {
@@ -1360,6 +1363,12 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 	reply.Data.Status.GoodID = req.Data.GoodID
 	reply.Data.Status.Num = req.Data.Num
 	reply.Data.Status.Status = 2
+	for i, v := range c.user.ClickOutputBox.ClickOutputs {
+		if int64(metaData.MessageSequenceID) == v.MessageSequenceID {
+			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
+			c.persistClikOutput()
+		}
+	}
 	c.persistPick(req.Data.GoodID, req.Data.Num)
 	c.user.GuajiProfile.CDPick = 0
 

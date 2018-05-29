@@ -550,7 +550,7 @@ type PickReq struct {
 // ClickStatusReq ...
 type ClickStatusReq struct {
 	Status int `json:"status"` // 物品Id
-
+	MessageSequenceID int64  `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 }
 
 // +++++++++++++
