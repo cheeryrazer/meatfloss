@@ -736,6 +736,16 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		c.SendMsg(reply)
 		return
 	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
+	myEmployee.MinLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MinLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
+
 	//产生随机的标示值
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
@@ -822,15 +832,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			//}(a)
 		}
 	}
-	//读取当前机器的属性值
-	myEmployee := &message.RoleGuajiSettlement{}
-	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
-	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
-	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
-	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
-	myEmployee.MinLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MinLevel
-	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
-	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 
 	c.SendMsg(reply)
 	c.persistEmployee()
@@ -1745,6 +1746,12 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.GuajiProfile.MachineLevel = 1
 	//初始化机器为不能升级
 	c.user.GuajiProfile.Upgrade = 3
+
+	//默认背包中一个雇员
+	onet := &common.EmployeesInfo{}
+	onet.EmployeesID = "gy001"
+	c.user.Bag.BagEmployee = append(c.user.Bag.BagEmployee, onet)
+
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
 	_ = newUser
