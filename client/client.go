@@ -611,14 +611,14 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			}
 		}
 		if Whether == 1 {
-			reply.Meta.Error = true
-			reply.Meta.ErrorMessage = materialNeed
+
+			reply.Data.MachineUpgradeType = "no"
+			reply.Data.MachineUpgradeMessage = materialNeed
 			c.SendMsg(reply)
 			return
 		} else {
 			c.user.GuajiProfile.Upgrade = 2
-			reply.Meta.Error = false
-			reply.Meta.MessageType = "开始升级"
+			reply.Data.MachineUpgradeType = "yes"
 			c.SendMsg(reply)
 			c.persistGuajiProfile()
 			return
