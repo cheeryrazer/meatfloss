@@ -1477,7 +1477,7 @@ func (c *GameClient) InitializationInfo() (err error) {
 	return
 }
 
-//  LoadGuajiProfile ...
+// LoadGuajiProfile ...
 func (c *GameClient) LoadGuajiProfile() (err error) {
 	// redis取出温度计算温度
 	timeNow := time.Now().Unix()
