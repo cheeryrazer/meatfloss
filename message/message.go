@@ -83,6 +83,20 @@ type ShowMyEmployeeListReq struct {
 	} `json:"data"`
 }
 
+// MsgTypeMachineUpgradeReq ...
+// 机器升级
+const MsgTypeMachineUpgradeReq int32 = 1484
+
+// ShowMachineUpgradeReq ...
+// 机器升级的请求
+type ShowMachineUpgradeReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		MachineUpgradeApply   string `json:"machineupgradeapply"`   //1升级的请求2不处理
+		MachineUpgradeConfirm string `json:"machineupgradeconfirm"` //1升级的确认2不处理
+	} `json:"data"`
+}
+
 // +++++++++++++
 
 // MsgTypeMarkNewsAsReadReq ...
@@ -222,6 +236,21 @@ const MsgTypeMyEmployeeReply int32 = 5800
 // MyEmployeeReply ...
 //  查看自己的雇员
 type MyEmployeeReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeMachineUpgradeReply ...
+// 机器升级的请求
+const MsgTypeMachineUpgradeReply int32 = 5900
+
+//MachineUpgradeReply ...
+//  机器的升级
+type MachineUpgradeReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Dummy string `json:"dummy"`
@@ -431,7 +460,7 @@ type MyEmployeeNotify struct {
 const MsgMyUpgradeNotify int32 = 3810
 
 // UpgradeNotify ...
-//  升级的主动推送
+//  机器升级的主动推送
 type UpgradeNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
@@ -440,6 +469,19 @@ type UpgradeNotify struct {
 		// Machine      []*RoleGuajiSettlement `json:"machine"`
 		Upgrade     string
 		UpgradeTime int
+	} `json:"data"`
+}
+
+// MsgMachineUpgradeNotify ...
+const MsgMachineUpgradeNotify int32 = 3581
+
+// MachineUpgradeNotify ...
+//  机器确认升级的推送
+type MachineUpgradeNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		MachineNow     []*RoleGuajiSettlement `json:"machinenow"`
+		MachineUpgrade []*RoleGuajiSettlement `json:"machineupgrade"`
 	} `json:"data"`
 }
 

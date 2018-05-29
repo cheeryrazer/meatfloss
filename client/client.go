@@ -183,8 +183,7 @@ func (c *GameClient) checkUpgrade() {
 	machine := c.user.GuajiProfile
 	//判定是否处在升级中
 	if machine.Upgrade == 1 {
-		machine.UpgradeTime -= 1
-		fmt.Println(gameconf.AllGuajis[machine.MachineLevel].Guajis[0].List[0].GoodsID)
+		machine.UpgradeTime--
 		msg := &message.UpgradeNotify{}
 		msg.Meta.MessageType = "UpgradeNotify"
 		msg.Meta.MessageTypeID = message.MsgMyUpgradeNotify
@@ -192,14 +191,18 @@ func (c *GameClient) checkUpgrade() {
 		msg.Data.Upgrade = "正在升级中"
 		msg.Data.UpgradeTime = machine.UpgradeTime
 		c.SendMsg(msg)
-		c.persistGuajiProfile()
+
 		//如果时间到了，更改状态不在更新的状态
 		if machine.UpgradeTime <= 0 {
-			machine.Upgrade = 2
+			machine.Upgrade = 3
 		}
+		c.persistGuajiProfile()
 		return
 	}
-
+	//如果是3表示未开启升级
+	if machine.Upgrade == 3 {
+		return
+	}
 	//根据当前机器的等级，员工的等级，还有所获的奖励进行升级的判定
 	//根据机器的等级，查询升级所需要的要求
 
@@ -213,27 +216,31 @@ func (c *GameClient) checkUpgrade() {
 	//判断升级需要的材料
 	if len(machineNeed) >= 0 {
 		//循环在背包比较需要的材料，背包中的数量是否满足
-		for goodsId, goods := range machineNeed {
-			_ = goodsId
-			if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
+		for goodsID, goods := range machineNeed {
+			_ = goodsID
+			if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID]; ok {
+				//背包中存在这个物品
+				if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
+					return
+				}
+			} else {
+				//背包中不存在这个物品
 				return
 			}
-
 		}
 	}
 	//更改背包中的数据
 	if len(machineNeed) >= 0 {
 		//更改升级材料
-		for goodsId, goods := range machineNeed {
-			_ = goodsId
+		for goodsID, goods := range machineNeed {
+			_ = goodsID
 			c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count -= goods.GoodsNum
 		}
 	}
 	//进入升级
-	machine.MachineLevel += 1
-	machine.Upgrade = 1 //升级中
 	machine.UpgradeTime = gameconf.AllGuajis[machine.MachineLevel].Uptime
-
+	machine.MachineLevel++
+	machine.Upgrade = 1 //升级中
 	return
 }
 
@@ -252,7 +259,7 @@ func (c *GameClient) checkGuajiOutput() {
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
 		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
-		if (timestamp - sr) < 20 {
+		if (timestamp - sr) < 60 {
 			return
 		}
 	}
@@ -517,9 +524,133 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandleMyEmployeeReq(metaData, rawMsg)
 	case message.MsgTypePickReq:
 		return c.HandlePickReq(metaData, rawMsg)
+	case message.MsgTypeMachineUpgradeReq:
+		return c.HandleMachineUpgradeReq(metaData, rawMsg)
 	}
 
 	return
+}
+
+// HandleMachineUpgradeReq ...
+func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.MachineUpgradeNotify{}
+	reply.Meta.MessageType = "MachineUpgradeNotify"
+	reply.Meta.MessageTypeID = message.MsgMyUpgradeNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	req := &message.ShowMachineUpgradeReq{}
+
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+	// req.Data.MachineUpgradeApply   1就是升级的请求
+	// req.Data.MachineUpgradeConfirm 1就是确认升级的请求
+	//处理请求升级的请求
+	if req.Data.MachineUpgradeApply == "1" && req.Data.MachineUpgradeConfirm == "2" {
+		//返还当当前的等级的数据还有升级之后的等级的数据
+		myEmployee := &message.RoleGuajiSettlement{}
+		myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
+		myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
+		myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
+		myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
+		myEmployee.MachineLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineLevel
+		myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
+		myEmployee.CD = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].CD
+		myEmployee.CDPerDegree = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].CDPerDegree
+		myEmployee.Uptime = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Uptime
+		myEmployee.MaxTemperature = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MaxTemperature
+		myEmployee.Upmaterial = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Upmaterial
+		// machineNeed := gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Guajis[0].List
+		// //判断升级需要的材料
+		// var material string
+		// if len(machineNeed) >= 0 {
+		// 	//循环升级的材料，查出他的信息
+		// 	for goodsId, goods := range machineNeed {
+		// 		_ = goodsId
+		// 		GoodsNum := strconv.Itoa(goods.GoodsNum)
+		// 		material += gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + ";"
+		// 	}
+		// }
+		// myEmployee.Upmaterial = material
+		reply.Data.MachineNow = append(reply.Data.MachineNow, myEmployee)
+		//返还升级后的
+		myEmployeeUp := &message.RoleGuajiSettlement{}
+		myEmployeeUp.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Luck
+		myEmployeeUp.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Quality
+		myEmployeeUp.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Speed
+		myEmployeeUp.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].NumEmployees
+		myEmployeeUp.MachineLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].MachineLevel
+		myEmployeeUp.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].MachineImage
+		myEmployeeUp.CD = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].CD
+		myEmployeeUp.CDPerDegree = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].CDPerDegree
+		myEmployeeUp.Uptime = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Uptime
+		myEmployeeUp.MaxTemperature = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].MaxTemperature
+		myEmployeeUp.Upmaterial = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Upmaterial
+		// machineNeedUp := gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel+1].Guajis[0].List
+		// //判断升级需要的材料
+		// var materialUp string
+		// if len(machineNeedUp) >= 0 {
+		// 	//循环升级的材料，查出他的信息
+		// 	for goodsId, goods := range machineNeedUp {
+		// 		_ = goodsId
+		// 		GoodsNum := strconv.Itoa(goods.GoodsNum)
+		// 		materialUp += gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + ";"
+		// 	}
+		// }
+		// myEmployeeUp.Upmaterial = materialUp
+		reply.Data.MachineUpgrade = append(reply.Data.MachineUpgrade, myEmployeeUp)
+		c.SendMsg(reply)
+		return
+	}
+	//确认升级的
+	if req.Data.MachineUpgradeApply == "2" && req.Data.MachineUpgradeConfirm == "1" {
+		//判断是否达到升级的要求
+		machineNeedConfirm := gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Guajis[0].List
+		//判断升级需要的材料
+		var Whether int32 = 0
+		_ = Whether
+		var materialNeed string
+		if len(machineNeedConfirm) >= 0 {
+			//循环在背包比较需要的材料，背包中的数量是否满足
+			for goodsId, goods := range machineNeedConfirm {
+				_ = goodsId
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID]; ok {
+					//此物品在背包中存在
+					GoodsNum := strconv.Itoa(goods.GoodsNum)
+					if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
+						materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+						Whether = 1
+					}
+				} else {
+					//物品在背包中不存在
+					GoodsNum := strconv.Itoa(goods.GoodsNum)
+					//if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
+					materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+					Whether = 1
+				}
+
+			}
+		}
+		if Whether == 1 {
+			reply.Meta.Error = true
+			reply.Meta.ErrorMessage = materialNeed
+			c.SendMsg(reply)
+			return
+		} else {
+			c.user.GuajiProfile.Upgrade = 2
+			reply.Meta.Error = false
+			reply.Meta.MessageType = "开始升级"
+			c.SendMsg(reply)
+			c.persistGuajiProfile()
+			return
+		}
+	}
+	reply.Meta.Error = true
+	reply.Meta.ErrorMessage = "invalid request"
+	c.SendMsg(reply)
+	return
+
 }
 
 // HandleEmployeeAdjustReq ...
@@ -573,12 +704,12 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 	}
 	//读取当前机器的属性值
 	myEmployee := &message.RoleGuajiSettlement{}
-	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
-	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
-	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
-	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
-	myEmployee.MachineLevel = gameconf.AllGuajis[c.user.Profile.Level].MachineLevel
-	myEmployee.MachineImage = gameconf.AllGuajis[c.user.Profile.Level].MachineImage
+	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
+	myEmployee.MachineLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
 	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 	c.SendMsg(reply)
 	return
@@ -691,12 +822,12 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 	}
 	//读取当前机器的属性值
 	myEmployee := &message.RoleGuajiSettlement{}
-	myEmployee.Luck = gameconf.AllGuajis[c.user.Profile.Level].Luck
-	myEmployee.Quality = gameconf.AllGuajis[c.user.Profile.Level].Quality
-	myEmployee.Speed = gameconf.AllGuajis[c.user.Profile.Level].Speed
-	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.Profile.Level].NumEmployees
-	myEmployee.MinLevel = gameconf.AllGuajis[c.user.Profile.Level].MinLevel
-	myEmployee.MachineImage = gameconf.AllGuajis[c.user.Profile.Level].MachineImage
+	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
+	myEmployee.MinLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MinLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
 	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 
 	c.SendMsg(reply)
@@ -1302,8 +1433,6 @@ func (c *GameClient) InitializationInfo() (err error) {
 		timestampnow := time.Now().Unix()
 		//上次登陆的时间戳
 		toBeCharge := c.user.LoginTime.Time
-		fmt.Println("++++++++++++++++++________________")
-		fmt.Println(toBeCharge)
 		timeLayout := "2006-01-02 15:04:05"                             //转化所需模板
 		loc, _ := time.LoadLocation("Local")                            //重要：获取时区
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
@@ -1410,7 +1539,7 @@ func (c *GameClient) InitializationInfo() (err error) {
 	return
 }
 
-//  LoadGuajiProfile ...
+// LoadGuajiProfile ...
 func (c *GameClient) LoadGuajiProfile() (err error) {
 	// redis取出温度计算温度
 	timeNow := time.Now().Unix()
@@ -1612,6 +1741,8 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.Profile.Level = 1
 	//初始化机器等级为1
 	c.user.GuajiProfile.MachineLevel = 1
+	//初始化机器为不能升级
+	c.user.GuajiProfile.Upgrade = 3
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
 	_ = newUser
