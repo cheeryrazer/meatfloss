@@ -480,8 +480,10 @@ const MsgMachineUpgradeNotify int32 = 3581
 type MachineUpgradeNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		MachineNow     []*RoleGuajiSettlement `json:"machinenow"`
-		MachineUpgrade []*RoleGuajiSettlement `json:"machineupgrade"`
+		MachineNow            []*RoleGuajiSettlement `json:"machinenow"`
+		MachineUpgrade        []*RoleGuajiSettlement `json:"machineupgrade"`
+		MachineUpgradeType    string                 `json:"machineupgradetype"` //yes可升级no不可升级
+		MachineUpgradeMessage string                 `json:"machineupgrademessage"`
 	} `json:"data"`
 }
 
