@@ -6,14 +6,16 @@ import (
 
 // ClickOutputBox ...
 type ClickOutputBox struct {
-	UserID       int // 用户的id
-	ClickOutput *common.ClickOutputInfo // 点击产出
+	UserID       int                       // 用户的id
+	ClickOutputs []*common.ClickOutputInfo // 点击产出
+	ClickOutput  *common.ClickOutputInfo
 }
 
 // NewClickOutputBox ...
-func NewClickOutputBox (userID int) (c *ClickOutputBox) {
+func NewClickOutputBox(userID int) (c *ClickOutputBox) {
 	c = &ClickOutputBox{}
 	c.UserID = userID
-	c.ClickOutput = &common.ClickOutputInfo {}
+	c.ClickOutputs = make([]*common.ClickOutputInfo, 0)
+	c.ClickOutput = &common.ClickOutputInfo{}
 	return
 }

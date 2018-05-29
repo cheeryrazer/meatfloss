@@ -93,7 +93,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.EventBox != nil {
 		data, err := json.Marshal(user.EventBox)
 		if err == nil {
-			glog.Info(string(data))
+	
 			fields["eventbox"] = string(data)
 		}
 	}
@@ -101,7 +101,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.Layout != nil {
 		data, err := json.Marshal(user.Layout)
 		if err == nil {
-			glog.Info(string(data))
+	
 			fields["layout"] = string(data)
 		}
 	}
@@ -109,7 +109,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.LoginTime != nil {
 		data, err := json.Marshal(user.LoginTime)
 		if err == nil {
-			glog.Info(string(data))
+	
 			fields["logintime"] = string(data)
 		}
 	}
@@ -117,7 +117,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.GuajiOutputBox != nil {
 		data, err := json.Marshal(user.GuajiOutputBox)
 		if err == nil {
-			glog.Info(string(data))
+		
 			fields["guajioutputbox"] = string(data)
 		}
 	}
@@ -125,7 +125,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.ClickOutputBox != nil {
 		data, err := json.Marshal(user.ClickOutputBox)
 		if err == nil {
-			glog.Info(string(data))
+	
 			fields["clickoutputbox"] = string(data)
 		}
 	}

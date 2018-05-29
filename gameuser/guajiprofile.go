@@ -13,6 +13,7 @@ type GuajiProfile struct {
 	CDTemperature      int          //剩余冷却时间
 	CDPick             int          //剩余捡起时间
 	ClickTime          int64        //温度产生时间
+	MessageSequenceID  int64          //唯一id
 }
 
 // NewGuajiProfile ...

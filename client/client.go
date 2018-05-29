@@ -18,10 +18,11 @@ import (
 	"meatfloss/utils"
 	"net"
 	"runtime"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
-	"sort"
+
 	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
 	"github.com/mohae/deepcopy"
@@ -142,6 +143,26 @@ func (c *GameClient) coolTemperature() {
 	}
 	// fmt.Println(currentTemperature)
 }
+
+func (c *GameClient) checkClickoutputs() {
+	fmt.Println("ssdasdadada")
+	timeNow := time.Now().Unix()
+	// c.lock.Lock()
+	clickoutputs := c.user.ClickOutputBox.ClickOutputs
+	for i, v := range clickoutputs {
+		if int(timeNow)-v.Time >= 5 {
+			fmt.Println(v.GoodID)
+			b, error := strconv.Atoi(v.GoodNum)
+			if error != nil {
+				fmt.Println("字符串转换成整数失败")
+			}
+			c.persistPick(v.GoodID, b)
+			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
+		}
+	}
+	// c.lock.Unlock()
+}
+
 func (c *GameClient) onPeriod() {
 	c.lock.Lock()
 	if c.UserID != 0 {
@@ -154,6 +175,7 @@ func (c *GameClient) periodCheck() {
 	c.checkTasks()
 	c.checkGuajiOutput()
 	c.coolTemperature()
+	// c.checkClickoutputs()
 	c.checkUpgrade()
 }
 
@@ -926,7 +948,6 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 			}
 		}
 	}
-
 	if cellNumAtLeast+len(c.user.Bag.Cells) > 81 {
 		return nil, errors.New("insufficient cells")
 	}
@@ -1007,13 +1028,13 @@ func (c *GameClient) AddExpToUser(exp int) {
 	fmt.Println(nowExp)
 	sort.Ints(AllHierarchicals)
 	for index, v := range AllHierarchicals {
-		if index>=c.user.Profile.Level{
-			if nowExp>=v{
+		if index >= c.user.Profile.Level {
+			if nowExp >= v {
 				c.lock.Lock()
-				c.user.Profile.Experience = nowExp-v
-				c.user.Profile.Level =(index+1)
+				c.user.Profile.Experience = nowExp - v
+				c.user.Profile.Level = (index + 1)
 				c.lock.Unlock()
-			}else{
+			} else {
 				c.user.Profile.Experience = nowExp
 				break
 			}
@@ -1144,13 +1165,8 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 // HandleClickOutputReq ...
 func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
 
-	ClickOutput := c.user.ClickOutputBox.ClickOutput
-	ClickOutput.GoodID = "wp0001"
-	ClickOutput.Time = int(time.Now().Unix())
-	ClickOutput.Type = 0
-	ClickOutput.UserID = c.user.UserID
-	reply := &message.ClickOutputReq{}
-	reply.Meta.MessageType = "ClickOutputReq"
+	reply := &message.ReplyClickOutputReq{}
+	reply.Meta.MessageType = "ReplyClickOutputReq"
 	reply.Meta.MessageTypeID = message.MsgTypeClickOutputReq
 	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
 
@@ -1174,7 +1190,6 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// }
 
 	c.persistClikOutput()
-	gameredis.PersistUser(c.user.UserID, c.user)
 	fmt.Println((c.user.ClickOutputBox))
 	c.SendMsg(reply)
 
@@ -1192,34 +1207,37 @@ func (c *GameClient) persistClikOutput() {
 
 // HandlePickReq ...
 func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
-	fmt.Println("捡起")
-	reply := &message.PickReq{}
-	reply.Meta.MessageType = "PickReq"
+	req := &message.PickReq{}
+	reply := &message.ReplyPickReq{}
+	err = json.Unmarshal(rawMsg, req)
+	fmt.Println(req.Data.GoodID)
+	fmt.Println("捡起-------")
+	fmt.Println(req.Data.Num)
+	if err != nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+
+	reply.Meta.MessageType = "ReplyPickReq"
 	reply.Meta.MessageTypeID = message.MsgTypePickReq
 	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
-	reply.Data.GoodID = c.user.ClickOutputBox.ClickOutput.GoodID
-	reply.Data.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
-	reply.Data.Status = 1
-	//5秒内捡起
-	if c.user.GuajiProfile.CDPick > 0 {
-		reply.Data.Status = 2
-		c.persistPick()
-		c.user.GuajiProfile.CDPick = 0
-	}
+	reply.Data.Status.GoodID = req.Data.GoodID
+	reply.Data.Status.Num = req.Data.Num
+	reply.Data.Status.Status = 2
+	c.persistPick(req.Data.GoodID, req.Data.Num)
+	c.user.GuajiProfile.CDPick = 0
 
 	c.SendMsg(reply)
 	return
 }
-func (c *GameClient) persistPick() {
+func (c *GameClient) persistPick(goodID string, num int) {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
 	var goodsIDs []string
 	var goodsCounts []int
-	goodsIDs = append(goodsIDs, c.user.ClickOutputBox.ClickOutput.GoodID)
-	num, err := strconv.Atoi(c.user.ClickOutputBox.ClickOutput.GoodNum)
-	if err != nil {
-		fmt.Println("fail")
-	}
+	goodsIDs = append(goodsIDs, goodID)
 	goodsCounts = append(goodsCounts, num)
 	c.PutToBagBatch(goodsIDs, goodsCounts)
 	cpy := deepcopy.Copy(c.user.Bag)
@@ -1396,6 +1414,9 @@ func (c *GameClient) InitializationInfo() (err error) {
 func (c *GameClient) LoadGuajiProfile() (err error) {
 	// redis取出温度计算温度
 	timeNow := time.Now().Unix()
+	if c.user.GuajiProfile.MessageSequenceID == 0 {
+		c.user.GuajiProfile.MessageSequenceID = timeNow
+	}
 	if c.user.GuajiProfile.CDTemperature > 0 {
 		//取出当前的等级
 		userProfile := c.user.Profile

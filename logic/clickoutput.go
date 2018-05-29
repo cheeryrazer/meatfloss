@@ -8,6 +8,8 @@ import (
 	"meatfloss/gameuser"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 // RandOutputInfo ...
@@ -25,11 +27,9 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 	// 判断机器是否在cd
 
 	if c.GuajiProfile.CDTemperature > 0 {
-		c.ClickOutputBox.ClickOutput = &common.ClickOutputInfo{}
 		return
 	}
 	//捡起时间+1s
-	c.GuajiProfile.CDPick = 5 + 1
 	//增温
 	CurrentTemperature := c.GuajiProfile.CurrentTemperature
 	CurrentTemperature += float64(machineInfo.TemperaturePerClick)
@@ -50,6 +50,7 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 
 	// 暴击概率产出
 	n := rand.Intn(100)
+	Clickoutput := &common.ClickOutputInfo{}
 	if n < machineInfo.CritProbability {
 		goods := strings.Split(machineInfo.CritOutput, "|")
 		ln := len(goods)
@@ -59,12 +60,13 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 		good := goods[goodIndex]
 		goodDetail := strings.Split(good, ";")
 
-		ClickOutputInfo := c.ClickOutputBox.ClickOutput
-		ClickOutputInfo.GoodID = goodDetail[0]
-		ClickOutputInfo.GoodNum = goodDetail[1]
-		ClickOutputInfo.Time = int(time.Now().Unix())
-		ClickOutputInfo.Type = 0
-		ClickOutputInfo.UserID = c.UserID
+		Clickoutput.GoodID = goodDetail[0]
+		Clickoutput.GoodNum = goodDetail[1]
+		Clickoutput.Time = int(time.Now().Unix())
+		Clickoutput.Type = 0
+		Clickoutput.UserID = c.UserID
+		Clickoutput.MessageSequenceID = c.GuajiProfile.MessageSequenceID
+		c.ClickOutputBox.ClickOutputs = append(c.ClickOutputBox.ClickOutputs, Clickoutput)
 		fmt.Println("暴击")
 		fmt.Println(goodIndex)
 	} else {
@@ -74,18 +76,21 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 		goodIndex := rand.Intn(ln)
 		good := goods[goodIndex]
 		goodDetail := strings.Split(good, ";")
-
-		ClickOutputInfo := c.ClickOutputBox.ClickOutput
-		ClickOutputInfo.GoodID = goodDetail[0]
-		ClickOutputInfo.GoodNum = goodDetail[1]
-		ClickOutputInfo.Time = int(time.Now().Unix())
-		ClickOutputInfo.Type = 0
-		ClickOutputInfo.UserID = c.UserID
+		Clickoutput.GoodID = goodDetail[0]
+		Clickoutput.GoodNum = goodDetail[1]
+		Clickoutput.Time = int(time.Now().Unix())
+		Clickoutput.Type = 0
+		Clickoutput.UserID = c.UserID
+		Clickoutput.MessageSequenceID = c.GuajiProfile.MessageSequenceID
+		c.ClickOutputBox.ClickOutputs = append(c.ClickOutputBox.ClickOutputs, Clickoutput)
 		fmt.Println("非暴击")
 		fmt.Println(goodIndex)
 		fmt.Println(machineInfo.CritProbability)
 
 	}
+	fmt.Println("-----------点击")
+	glog.Info(c.ClickOutputBox.ClickOutputs)
+	c.GuajiProfile.MessageSequenceID++
 	return
 
 }

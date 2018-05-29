@@ -133,11 +133,12 @@ type GuajiOutputInfo struct {
 
 // ClickOutputInfo ...
 type ClickOutputInfo struct {
-	UserID  int    // 用户的id
-	Type    int    // 0.点击产出 1.暴击产出
-	Time    int    //产出时间
-	GoodID  string //产出物品
-	GoodNum string // 产出数量
+	UserID            int    // 用户的id
+	Type              int    // 0.点击产出 1.暴击产出
+	Time              int    //产出时间
+	GoodID            string //产出物品
+	GoodNum           string // 产出数量
+	MessageSequenceID int64  //唯一id
 }
 
 // EmployeesInfo ...
