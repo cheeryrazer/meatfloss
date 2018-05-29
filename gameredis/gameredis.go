@@ -235,12 +235,6 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.TaskBox = obj
-				taskNum := len(user.TaskBox.Tasks)
-				// fmt.Println(data)
-				// fmt.Println("userID: ", obj.UserID)
-				// fmt.Println("taskNum: ", taskNum)
-
-				_ = taskNum
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -295,7 +289,6 @@ func LoadUser(userID int) *gameuser.User {
 			obj := &gameuser.LoginTime{}
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
-				fmt.Println("测试挂机---------------3333")
 				user.LoginTime = obj
 			} else {
 				glog.Warning("json.Unmarshal failed")
@@ -311,7 +304,6 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.GuajiOutputBox = obj
-				fmt.Println("测试挂机---------------444")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
@@ -326,13 +318,11 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.GuajiSettlement = obj
-				fmt.Println("测试挂机---------------666")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
 		}
 	}
-
 	//GuajiProfile
 	if result[9] != nil {
 		data, ok := result[9].(string)
@@ -356,14 +346,11 @@ func LoadUser(userID int) *gameuser.User {
 			err := json.Unmarshal([]byte(data), obj)
 			if err == nil {
 				user.ClickOutputBox = obj
-				fmt.Println("测试挂机---------------555")
 			} else {
 				glog.Warning("json.Unmarshal failed")
 			}
 		}
 	}
-	fmt.Println(user.GuajiProfile)
-	fmt.Println("测试挂机---------------")
 	if user.Profile == nil {
 		user.Profile = gameuser.NewProfile(userID)
 	}

@@ -619,6 +619,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			reply.Meta.Error = false
 			reply.Meta.MessageType = "开始升级"
 			c.SendMsg(reply)
+			c.persistGuajiProfile()
 			return
 		}
 	}
@@ -1671,6 +1672,8 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.Profile.Level = 1
 	//初始化机器等级为1
 	c.user.GuajiProfile.MachineLevel = 1
+	//初始化机器为不能升级
+	c.user.GuajiProfile.Upgrade = 3
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
 	_ = newUser
