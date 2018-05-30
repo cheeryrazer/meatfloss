@@ -146,7 +146,7 @@ func (c *GameClient) checkClickoutputs() {
 		return
 	}
 
-	for i, v := range clickoutputs {
+	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int(timeNow)-v.Time > 5 {
 			fmt.Println(v.GoodID)
 			b, error := strconv.Atoi(v.GoodNum)
@@ -995,6 +995,7 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	}
 	reply.Data.EventGenID = req.Data.EventGenID
 	c.SendMsg(reply)
+	c.AddExpToUser(3)
 	// 然后下就是推送奖励
 	if eventInfo.Type == "normal" {
 		c.OnFinishNormalEvent(eventInfo, req.Data.Choice)
@@ -1170,6 +1171,7 @@ func (c *GameClient) AddExpToUser(exp int) {
 				c.lock.Unlock()
 			} else {
 				c.user.Profile.Experience = nowExp
+				c.user.Profile.Level = index
 				break
 			}
 		}
