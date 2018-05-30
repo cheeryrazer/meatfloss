@@ -1350,6 +1350,8 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	reply.Data.Output.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
 	reply.Data.Output.CD = c.user.GuajiProfile.CDTemperature
 	reply.Data.Output.Percent = c.user.GuajiProfile.TemperaturePercent
+	reply.Data.Output.MessageSequenceID = c.user.GuajiProfile.MessageSequenceID
+	c.user.GuajiProfile.MessageSequenceID++
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
