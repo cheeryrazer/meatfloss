@@ -155,16 +155,15 @@ func (c *GameClient) checkClickoutputs() {
 				fmt.Println("字符串转换成整数失败")
 			}
 			reply := &message.ClickStatusReq{}
-			reply.Meta.MessageType = "PickReq"
+			reply.Meta.MessageType = "AutoPickReq"
 			reply.Data.Status.Status = 2
 			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
 			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			fmt.Println(i)
-	
 
-		}else{
+		} else {
 			newClickOutputs = append(newClickOutputs, v)
 		}
 	}
@@ -1393,6 +1392,7 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 	reply.Data.Status.GoodID = req.Data.GoodID
 	reply.Data.Status.Num = req.Data.Num
 	reply.Data.Status.Status = 2
+	reply.Data.Status.MessageSequenceID = int64(metaData.MessageSequenceID)
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int64(metaData.MessageSequenceID) == v.MessageSequenceID {
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
