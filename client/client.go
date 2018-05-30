@@ -153,7 +153,11 @@ func (c *GameClient) checkClickoutputs() {
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
-			c.SendMsg(&message.ClickStatusReq{Status: 1, MessageSequenceID: v.MessageSequenceID})
+		reply:=&message.ClickStatusReq{}
+		reply.Meta.MessageType="PickReq"
+		reply.Data.Status.Status=2
+		reply.Data.Status.MessageSequenceID=v.MessageSequenceID
+			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
