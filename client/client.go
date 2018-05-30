@@ -144,7 +144,7 @@ func (c *GameClient) coolTemperature() {
 func (c *GameClient) checkClickoutputs() {
 	timeNow := time.Now().Unix()
 	clickoutputs := c.user.ClickOutputBox.ClickOutputs
-	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
+	if len(clickoutputs) == 0 {
 		return
 	}
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
