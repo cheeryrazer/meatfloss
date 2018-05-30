@@ -510,11 +510,12 @@ type ReplyClickOutputReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Output struct {
-			GoodID      string  `json:"goodId"`      // 物品Id
-			Temperature float64 `json:"temperature"` // 温度
-			Num         string  `json:"num"`         // 物品数
-			CD          int     `json:"cd"`          // 机器过热cd
-			Percent     float64 `json:"percent"`     // 温度百分比
+			GoodID            string  `json:"goodId"`            // 物品Id
+			Temperature       float64 `json:"temperature"`       // 温度
+			Num               string  `json:"num"`               // 物品数
+			CD                int     `json:"cd"`                // 机器过热cd
+			Percent           float64 `json:"percent"`           // 温度百分比
+			MessageSequenceID int64   `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 		} `json:"output"`
 	} `json:"data"`
 }
@@ -540,9 +541,10 @@ type ReplyPickReq struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Status struct {
-			GoodID string `json:"goodId"` // 物品Id
-			Num    int    `json:"num"`    // 物品数
-			Status int    `json:"status"` // 状态
+			GoodID            string `json:"goodId"`            // 物品Id
+			Num               int    `json:"num"`               // 物品数
+			Status            int    `json:"status"`            // 状态
+			MessageSequenceID int64  `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 		} `json:"status"`
 	} `json:"data"`
 }
@@ -562,8 +564,13 @@ type PickReq struct {
 
 // ClickStatusReq ...
 type ClickStatusReq struct {
-	Status            int   `json:"status"`            // 物品Id
-	MessageSequenceID int64 `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Status struct {
+			Status            int   `json:"status"`            // 物品Id
+			MessageSequenceID int64 `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
+		} `json:"status"`
+	} `json:"data"`
 }
 
 // +++++++++++++
