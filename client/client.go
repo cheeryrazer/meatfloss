@@ -116,10 +116,6 @@ func (c *GameClient) coolTemperature() {
 	machine := gameconf.AllGuajis
 	// 默认等级0+1
 	machineInfo := machine[userProfile.Level+1]
-	// if c.user.GuajiProfile.CDPick > 1 {
-	// 	c.user.GuajiProfile.CDPick--
-
-	// }
 	// 取出cd
 	cd := c.user.GuajiProfile.CDTemperature
 	if cd == 1 {
@@ -146,24 +142,28 @@ func (c *GameClient) checkClickoutputs() {
 	timeNow := time.Now().Unix()
 	fmt.Println(c.user.ClickOutputBox)
 	clickoutputs := c.user.ClickOutputBox.ClickOutputs
-	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
+	if len(clickoutputs) == 0 {
 		return
 	}
-	for i, v := range clickoutputs {
-		if int(timeNow)-v.Time >= 5 {
+
+	for i, v := range c.user.ClickOutputBox.ClickOutputs {
+		if int(timeNow)-v.Time > 5 {
 			fmt.Println(v.GoodID)
 			b, error := strconv.Atoi(v.GoodNum)
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
-			c.SendMsg(&message.ClickStatusReq{Status: 1, MessageSequenceID: v.MessageSequenceID})
 			c.persistPick(v.GoodID, b)
+			c.SendMsg(&message.ClickStatusReq{Status: 1, MessageSequenceID: v.MessageSequenceID})
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
-
+			c.persistClikOutput()
 		}
 	}
-	c.persistClikOutput()
+	if err := recover(); err != nil {
+		fmt.Println(err) //这里的err其实就是panic传入的内容，55
+	}
+
 }
 
 func (c *GameClient) onPeriod() {
@@ -178,8 +178,8 @@ func (c *GameClient) periodCheck() {
 	c.checkTasks()
 	c.checkGuajiOutput()
 	c.coolTemperature()
-	c.checkClickoutputs()
-	c.checkUpgrade()
+	defer c.checkClickoutputs()
+	// c.checkUpgrade()
 }
 
 func (c *GameClient) checkUpgrade() {
@@ -262,7 +262,7 @@ func (c *GameClient) checkGuajiOutput() {
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
 		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
-		if (timestamp - sr) < 120 {
+		if (timestamp - sr) < 60 {
 			return
 		}
 	}
@@ -353,7 +353,6 @@ func (c *GameClient) checkGuajiOutput() {
 	oneEvent.Items = "产出" + coinNums + "金币"
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
-	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
 	//用户金币数的增加
 	var goodsIDs []string
 	var goodsCounts []int
@@ -637,21 +636,19 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			}
 		}
 		if Whether == 1 {
-
-			reply.Data.MachineUpgradeType = "no"
-			reply.Data.MachineUpgradeMessage = materialNeed
+			reply.Meta.Error = true
+			reply.Meta.ErrorMessage = materialNeed
 			c.SendMsg(reply)
 			return
 		} else {
 			c.user.GuajiProfile.Upgrade = 2
-			reply.Data.MachineUpgradeType = "yes"
-			reply.Data.MachineUpgradeMessage = "正在升级"
+			reply.Meta.Error = false
+			reply.Meta.MessageType = "开始升级"
 			c.SendMsg(reply)
 			c.persistGuajiProfile()
 			return
 		}
 	}
-
 	reply.Meta.Error = true
 	reply.Meta.ErrorMessage = "invalid request"
 	c.SendMsg(reply)
@@ -740,16 +737,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		c.SendMsg(reply)
 		return
 	}
-	//读取当前机器的属性值
-	myEmployee := &message.RoleGuajiSettlement{}
-	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
-	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
-	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
-	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
-	myEmployee.MinLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MinLevel
-	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
-	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
-
 	//产生随机的标示值
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fmt.Println(r.Intn(10000)) // [0,100)的随机值，返回值为int
@@ -773,8 +760,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			}(a)
 		}
 		runtime.Gosched()
-	} else {
-		c.user.GuajiProfile.EmployeeBox.EmployeesInfo = make([]*common.EmployeesInfo, 0)
 	}
 
 	//加入背包
@@ -792,8 +777,6 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		}
 
 		runtime.Gosched()
-	} else {
-		c.user.Bag.BagEmployee = make([]*common.EmployeesInfo, 0)
 	}
 	fmt.Println(len(layout.Employee))
 
@@ -840,6 +823,15 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			//}(a)
 		}
 	}
+	//读取当前机器的属性值
+	myEmployee := &message.RoleGuajiSettlement{}
+	myEmployee.Luck = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Luck
+	myEmployee.Quality = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Quality
+	myEmployee.Speed = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].Speed
+	myEmployee.NumEmployees = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].NumEmployees
+	myEmployee.MinLevel = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MinLevel
+	myEmployee.MachineImage = gameconf.AllGuajis[c.user.GuajiProfile.MachineLevel].MachineImage
+	reply.Data.Machine = append(reply.Data.Machine, myEmployee)
 
 	c.SendMsg(reply)
 	c.persistEmployee()
@@ -1003,6 +995,7 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	}
 	reply.Data.EventGenID = req.Data.EventGenID
 	c.SendMsg(reply)
+	c.AddExpToUser(3)
 	// 然后下就是推送奖励
 	if eventInfo.Type == "normal" {
 		c.OnFinishNormalEvent(eventInfo, req.Data.Choice)
@@ -1178,6 +1171,7 @@ func (c *GameClient) AddExpToUser(exp int) {
 				c.lock.Unlock()
 			} else {
 				c.user.Profile.Experience = nowExp
+				c.user.Profile.Level = index
 				break
 			}
 		}
@@ -1758,14 +1752,8 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.Profile.Level = 1
 	//初始化机器等级为1
 	c.user.GuajiProfile.MachineLevel = 1
-	//初始化机器为不能升级的
+	//初始化机器为不能升级
 	c.user.GuajiProfile.Upgrade = 3
-
-	//默认背包中一个雇员
-	onet := &common.EmployeesInfo{}
-	onet.EmployeesID = "gy001"
-	c.user.Bag.BagEmployee = append(c.user.Bag.BagEmployee, onet)
-
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
 	_ = newUser
