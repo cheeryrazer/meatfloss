@@ -1320,6 +1320,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	reply.Data.Output.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
 	reply.Data.Output.CD = c.user.GuajiProfile.CDTemperature
 	reply.Data.Output.Percent = c.user.GuajiProfile.TemperaturePercent
+	reply.Data.Output.MessageSequenceID = c.user.GuajiProfile.MessageSequenceID
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
@@ -1362,6 +1363,7 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 	reply.Data.Status.GoodID = req.Data.GoodID
 	reply.Data.Status.Num = req.Data.Num
 	reply.Data.Status.Status = 2
+	reply.Data.Status.MessageSequenceID = int64(metaData.MessageSequenceID)
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int64(metaData.MessageSequenceID) == v.MessageSequenceID {
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
