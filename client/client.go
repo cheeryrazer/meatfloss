@@ -659,7 +659,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 
 }
 
-// HandleEmployeeAdjustReq ...
+// HandleMyEmployeeReq ...
 func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
 
 	reply := &message.MyEmployeeNotify{}
