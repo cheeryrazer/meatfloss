@@ -156,7 +156,11 @@ func (c *GameClient) checkClickoutputs() {
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
-			c.SendMsg(&message.ClickStatusReq{Status: 1, MessageSequenceID: v.MessageSequenceID})
+			reply := &message.ClickStatusReq{}
+			reply.Meta.MessageType = "PickReq"
+			reply.Data.Status.Status =2
+			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
+			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
@@ -1327,6 +1331,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	reply.Data.Output.CD = c.user.GuajiProfile.CDTemperature
 	reply.Data.Output.Percent = c.user.GuajiProfile.TemperaturePercent
 	reply.Data.Output.MessageSequenceID = c.user.GuajiProfile.MessageSequenceID
+	c.user.GuajiProfile.MessageSequenceID++
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)

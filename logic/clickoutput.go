@@ -92,7 +92,7 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 	}
 	fmt.Println("-----------点击")
 	glog.Info(c.ClickOutputBox.ClickOutputs)
-	c.GuajiProfile.MessageSequenceID++
+
 	return
 
 }
