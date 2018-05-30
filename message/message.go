@@ -476,7 +476,7 @@ type UpgradeNotify struct {
 const MsgMyCoolingNotify int32 = 3811
 
 // CooliNotify ...
-//  机器降温的主动推送
+//  机器降温的主动推送的
 type CooliNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
