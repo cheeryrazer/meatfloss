@@ -196,7 +196,6 @@ func (c *GameClient) checkCooding() {
 	if c.user.GuajiProfile.CDTemperature == 0 {
 		return
 	}
-	c.user.GuajiProfile.CDTemperature--
 	msg := &message.CooliNotify{}
 	msg.Meta.MessageType = "CooliNotify"
 	msg.Meta.MessageTypeID = message.MsgMyCoolingNotify
