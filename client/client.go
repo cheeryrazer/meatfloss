@@ -118,7 +118,7 @@ func (c *GameClient) coolTemperature() {
 	machineInfo := machine[userProfile.Level+1]
 	// if c.user.GuajiProfile.CDPick > 1 {
 	// 	c.user.GuajiProfile.CDPick--
-	
+
 	// }
 	// 取出cd
 	cd := c.user.GuajiProfile.CDTemperature
@@ -156,7 +156,7 @@ func (c *GameClient) checkClickoutputs() {
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
-			c.SendMsg(&message.ClickStatusReq{Status: 1,MessageSequenceID:v.MessageSequenceID})
+			c.SendMsg(&message.ClickStatusReq{Status: 1, MessageSequenceID: v.MessageSequenceID})
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
@@ -179,7 +179,7 @@ func (c *GameClient) periodCheck() {
 	c.checkGuajiOutput()
 	c.coolTemperature()
 	c.checkClickoutputs()
-	// c.checkUpgrade()
+	c.checkUpgrade()
 }
 
 func (c *GameClient) checkUpgrade() {
@@ -645,6 +645,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 		} else {
 			c.user.GuajiProfile.Upgrade = 2
 			reply.Data.MachineUpgradeType = "yes"
+			reply.Data.MachineUpgradeMessage = "正在升级"
 			c.SendMsg(reply)
 			c.persistGuajiProfile()
 			return
@@ -772,6 +773,8 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 			}(a)
 		}
 		runtime.Gosched()
+	} else {
+		c.user.GuajiProfile.EmployeeBox.EmployeesInfo = make([]*common.EmployeesInfo, 0)
 	}
 
 	//加入背包
@@ -789,6 +792,8 @@ func (c *GameClient) HandleEmployeeAdjustReq(metaData message.ReqMetaData, rawMs
 		}
 
 		runtime.Gosched()
+	} else {
+		c.user.Bag.BagEmployee = make([]*common.EmployeesInfo, 0)
 	}
 	fmt.Println(len(layout.Employee))
 
