@@ -66,6 +66,7 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 		Clickoutput.Type = 0
 		Clickoutput.UserID = c.UserID
 		Clickoutput.MessageSequenceID = c.GuajiProfile.MessageSequenceID
+		c.ClickOutputBox.ClickOutput = Clickoutput
 		c.ClickOutputBox.ClickOutputs = append(c.ClickOutputBox.ClickOutputs, Clickoutput)
 		fmt.Println("暴击")
 		fmt.Println(goodIndex)
@@ -82,6 +83,7 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 		Clickoutput.Type = 0
 		Clickoutput.UserID = c.UserID
 		Clickoutput.MessageSequenceID = c.GuajiProfile.MessageSequenceID
+		c.ClickOutputBox.ClickOutput = Clickoutput
 		c.ClickOutputBox.ClickOutputs = append(c.ClickOutputBox.ClickOutputs, Clickoutput)
 		fmt.Println("非暴击")
 		fmt.Println(goodIndex)
