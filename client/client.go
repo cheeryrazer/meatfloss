@@ -147,16 +147,16 @@ func (c *GameClient) checkClickoutputs() {
 	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
 		return
 	}
-	for i, v := range clickoutputs {
+	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int(timeNow)-v.Time >= 5 {
 			b, error := strconv.Atoi(v.GoodNum)
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
 			}
-		reply:=&message.ClickStatusReq{}
-		reply.Meta.MessageType="PickReq"
-		reply.Data.Status.Status=2
-		reply.Data.Status.MessageSequenceID=v.MessageSequenceID
+			reply := &message.ClickStatusReq{}
+			reply.Meta.MessageType = "PickReq"
+			reply.Data.Status.Status = 2
+			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
 			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
