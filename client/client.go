@@ -143,10 +143,11 @@ func (c *GameClient) coolTemperature() {
 
 func (c *GameClient) checkClickoutputs() {
 	timeNow := time.Now().Unix()
-	clickoutputs := c.user.ClickOutputBox.ClickOutputs
-	if len(clickoutputs) == 0 {
+	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
 		return
+
 	}
+	var newClickOutputs []*common.ClickOutputInfo
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int(timeNow)-v.Time >= 5 {
 			b, error := strconv.Atoi(v.GoodNum)
@@ -160,9 +161,17 @@ func (c *GameClient) checkClickoutputs() {
 			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
-			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
+			fmt.Println(i)
+	
+
+		}else{
+			newClickOutputs = append(newClickOutputs, v)
 		}
 	}
+	c.user.ClickOutputBox.ClickOutputs = make([]*common.ClickOutputInfo, 0)
+	fmt.Println(newClickOutputs)
+	fmt.Println("3172921712783128391")
+	c.user.ClickOutputBox.ClickOutputs = newClickOutputs
 	c.persistClikOutput()
 }
 
