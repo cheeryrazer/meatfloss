@@ -467,8 +467,21 @@ type UpgradeNotify struct {
 		// EmployeeWork []*Employeeinfo        `json:"employeeWork"`
 		// EmployeeBack []*Employeeinfo        `json:"employeeBack"`
 		// Machine      []*RoleGuajiSettlement `json:"machine"`
-		Upgrade     string
-		UpgradeTime int
+		Upgrade     string `json:"upgrade"`
+		UpgradeTime int    `json:"upgradeTime"`
+	} `json:"data"`
+}
+
+// MsgMyCoolingNotify ...
+const MsgMyCoolingNotify int32 = 3811
+
+// CooliNotify ...
+//  机器降温的主动推送
+type CooliNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Upgrade     string `json:"upgrade"`
+		UpgradeTime int    `json:"upgradeTime"`
 	} `json:"data"`
 }
 
@@ -530,7 +543,7 @@ type ReplyPickReq struct {
 			GoodID string `json:"goodId"` // 物品Id
 			Num    int    `json:"num"`    // 物品数
 			Status int    `json:"status"` // 状态
-		}`json:"status"`
+		} `json:"status"`
 	} `json:"data"`
 }
 
@@ -549,8 +562,8 @@ type PickReq struct {
 
 // ClickStatusReq ...
 type ClickStatusReq struct {
-	Status int `json:"status"` // 物品Id
-	MessageSequenceID int64  `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
+	Status            int   `json:"status"`            // 物品Id
+	MessageSequenceID int64 `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 }
 
 // +++++++++++++

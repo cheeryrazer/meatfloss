@@ -138,20 +138,17 @@ func (c *GameClient) coolTemperature() {
 	if c.user.GuajiProfile.CurrentTemperature < float64(machineInfo.InitialTemperature) {
 		c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
 	}
-	// fmt.Println(currentTemperature)
+
 }
 
 func (c *GameClient) checkClickoutputs() {
-	fmt.Println("ssdasdadada")
 	timeNow := time.Now().Unix()
-	fmt.Println(c.user.ClickOutputBox)
 	clickoutputs := c.user.ClickOutputBox.ClickOutputs
 	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
 		return
 	}
 	for i, v := range clickoutputs {
 		if int(timeNow)-v.Time >= 5 {
-			fmt.Println(v.GoodID)
 			b, error := strconv.Atoi(v.GoodNum)
 			if error != nil {
 				fmt.Println("字符串转换成整数失败")
@@ -160,7 +157,6 @@ func (c *GameClient) checkClickoutputs() {
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
-
 		}
 	}
 	c.persistClikOutput()
@@ -180,8 +176,23 @@ func (c *GameClient) periodCheck() {
 	c.coolTemperature()
 	c.checkClickoutputs()
 	c.checkUpgrade()
+	c.checkCooding()
 }
-
+func (c *GameClient) checkCooding() {
+	//机器的降温
+	if c.user.GuajiProfile.CDTemperature == 0 {
+		return
+	}
+	c.user.GuajiProfile.CDTemperature--
+	msg := &message.CooliNotify{}
+	msg.Meta.MessageType = "CooliNotify"
+	msg.Meta.MessageTypeID = message.MsgMyCoolingNotify
+	msg.Meta.MessageSequenceID = 201
+	msg.Data.Upgrade = "正在降温中"
+	msg.Data.UpgradeTime = c.user.GuajiProfile.CDTemperature
+	c.SendMsg(msg)
+	return
+}
 func (c *GameClient) checkUpgrade() {
 	machine := c.user.GuajiProfile
 	//判定是否处在升级中
@@ -353,7 +364,7 @@ func (c *GameClient) checkGuajiOutput() {
 	oneEvent.Items = "产出" + coinNums + "金币"
 	oneEvent.Time = time.Now().Format("2006-01-02 15:04:05")
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
-	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
+
 	//用户金币数的增加
 	var goodsIDs []string
 	var goodsCounts []int
