@@ -111,11 +111,11 @@ func (c *GameClient) HandleHelper() {
 func (c *GameClient) coolTemperature() {
 	// fmt.Println(c.user.GuajiProfile.CurrentTemperature)
 	//取出当前的等级
-	userProfile := c.user.Profile
+	level := c.user.GuajiProfile.MachineLevel
 	//根据等级取出当前的机器的结算数据
 	machine := gameconf.AllGuajis
 	// 默认等级0+1
-	machineInfo := machine[userProfile.Level+1]
+	machineInfo := machine[level]
 	// if c.user.GuajiProfile.CDPick > 1 {
 	// 	c.user.GuajiProfile.CDPick--
 
@@ -146,6 +146,19 @@ func (c *GameClient) checkClickoutputs() {
 	if len(c.user.ClickOutputBox.ClickOutputs) == 0 {
 		return
 
+	}
+	if c.user.GuajiProfile.CDTemperature > 0 {
+		for _, v := range c.user.ClickOutputBox.ClickOutputs {
+
+			b, error := strconv.Atoi(v.GoodNum)
+			if error != nil {
+				fmt.Println("字符串转换成整数失败")
+			}
+			c.persistPick(v.GoodID, b)
+		}
+		c.user.ClickOutputBox.ClickOutputs = make([]*common.ClickOutputInfo, 0)
+		c.persistClikOutput()
+		return
 	}
 	var newClickOutputs []*common.ClickOutputInfo
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
@@ -1172,39 +1185,38 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 }
 
 // AddExpToUser ...
-func (c *GameClient) AddExpToUser(exp int) {
+func (c *GameClient) AddExpToUser(exp int) (err error) {
 	nowExp := c.user.Profile.Experience + exp
+
 	// nextExp:=AllHierarchical[c.user.Profile.Level+1]
 	var AllHierarchicals []int
-
+	AllHierarchicals = append(AllHierarchicals, 0)
 	for _, v := range gameconf.AllHierarchical {
 		AllHierarchicals = append(AllHierarchicals, v.EssentialExperience)
 	}
-
-	// for i:=0;i<le-1;i++{
-	// 	if AllHierarchicals[i]>AllHierarchicals[i+1]{
-	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 		AllHierarchicals[i+1]= AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 	}
-	// }
-	fmt.Println("---22---22--2")
-	fmt.Println(nowExp)
 	sort.Ints(AllHierarchicals)
-	for index, v := range AllHierarchicals {
-		if index >= c.user.Profile.Level {
-			if nowExp >= v {
-				c.lock.Lock()
-				c.user.Profile.Experience = nowExp - v
-				c.user.Profile.Level = (index + 1)
-				c.lock.Unlock()
-			} else {
-				c.user.Profile.Experience = nowExp
-				break
+	fmt.Println(AllHierarchicals)
+	ln := len(AllHierarchicals)
+	if nowExp < AllHierarchicals[ln-1] {
+		c.user.Profile.Experience = nowExp
+	} else {
+		c.user.Profile.Experience = AllHierarchicals[ln-1]
+		c.user.Profile.Level = ln
+		c.persistProfile()
+		return
+	}
+	for i := 0; i < ln-1; i++ {
+		if i >= c.user.Profile.Level {
+
+			if nowExp >= AllHierarchicals[i] && nowExp < AllHierarchicals[i+1] {
+				c.user.Profile.Experience = nowExp - AllHierarchicals[i]
+				c.user.Profile.Level = i + 1
 			}
+
 		}
 
 	}
+	fmt.Println(c.user.Profile.Experience)
 	c.persistProfile()
 	return
 }
@@ -1354,7 +1366,10 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
 	// }
-
+	err = c.AddExpToUser(200)
+	if err != nil {
+		fmt.Println(err)
+	}
 	c.persistClikOutput()
 	fmt.Println((c.user.ClickOutputBox))
 	c.SendMsg(reply)
@@ -1590,11 +1605,11 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 	}
 	if c.user.GuajiProfile.CDTemperature > 0 {
 		//取出当前的等级
-		userProfile := c.user.Profile
+		level := c.user.GuajiProfile.MachineLevel
 		//根据等级取出当前的机器的结算数据
 		machine := gameconf.AllGuajis
 		// 默认等级0+1
-		machineInfo := machine[userProfile.Level+1]
+		machineInfo := machine[level]
 		//取出机器温度
 		fmt.Println(c.user.GuajiProfile.CurrentTemperature)
 		fmt.Println("测试----！")
@@ -1608,11 +1623,11 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 	} else {
 		TimeDecr := timeNow - c.user.GuajiProfile.ClickTime
 		//取出当前的等级
-		userProfile := c.user.Profile
+		level := c.user.GuajiProfile.MachineLevel
 		//根据等级取出当前的机器的结算数据
 		machine := gameconf.AllGuajis
 		// 默认等级0+1
-		machineInfo := machine[userProfile.Level+1]
+		machineInfo := machine[level]
 		c.user.GuajiProfile.CurrentTemperature -= float64(TimeDecr / int64(machineInfo.CDPerDegree))
 		if c.user.GuajiProfile.CurrentTemperature < float64(machineInfo.InitialTemperature) {
 			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
