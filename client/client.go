@@ -208,13 +208,13 @@ func (c *GameClient) checkCooding() {
 	if c.user.GuajiProfile.CDTemperature == 0 {
 		return
 	}
-			//取出当前的等级
-			level := c.user.GuajiProfile.MachineLevel
-			//根据等级取出当前的机器的结算数据
-			machine := gameconf.AllGuajis
-			// 默认等级0+1
-			machineInfo := machine[level]
-			//取出机器温度
+	//取出当前的等级
+	level := c.user.GuajiProfile.MachineLevel
+	//根据等级取出当前的机器的结算数据
+	machine := gameconf.AllGuajis
+	// 默认等级0+1
+	machineInfo := machine[level]
+	//取出机器温度
 	msg := &message.CooliNotify{}
 	msg.Meta.MessageType = "CooliNotify"
 	msg.Meta.MessageTypeID = message.MsgMyCoolingNotify
@@ -676,7 +676,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 					materialNeed += gameconf.AllGoods[goods.GoodsID].Name + "数量不足：需要" + GoodsNum + "个！"
 					Whether = 1
 				}
-                                  
+
 			}
 		}
 		if Whether == 1 {
@@ -686,9 +686,9 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			c.SendMsg(reply)
 			return
 		} else {
-			if(c.user.GuajiProfile.Upgrade !=1){
+			if c.user.GuajiProfile.Upgrade != 1 {
 				c.user.GuajiProfile.Upgrade = 2
-			}    
+			}
 			reply.Data.MachineUpgradeType = "yes"
 			reply.Data.MachineUpgradeMessage = "正在升级"
 			c.SendMsg(reply)
@@ -1213,6 +1213,7 @@ func (c *GameClient) AddExpToUser(exp int) (err error) {
 		c.user.Profile.Experience = AllHierarchicals[ln-1]
 		c.user.Profile.Level = ln
 		c.persistProfile()
+		c.PushUserNotify()
 		return
 	}
 	for i := 0; i < ln-1; i++ {
@@ -1227,7 +1228,42 @@ func (c *GameClient) AddExpToUser(exp int) (err error) {
 
 	}
 	fmt.Println(c.user.Profile.Experience)
+	c.PushUserNotify()
 	c.persistProfile()
+	return
+}
+
+// AddCoinToUser ...
+func (c *GameClient) AddCoinToUser(coin int) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.user.Profile.Coin += coin
+	c.persistProfile()
+	c.PushUserNotify()
+	return
+}
+
+// AddDiamondToUser ...
+func (c *GameClient) AddDiamondToUser(d int) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	c.user.Profile.Diamond += d
+	c.persistProfile()
+	c.PushUserNotify()
+	return
+}
+
+// AddDiamondToUser ...
+func (c *GameClient) PushUserNotify() (err error) {
+	reply := &message.ReplyUserNotify{}
+	reply.Meta.MessageType = "ReplyUserNotify"
+	reply.Meta.MessageTypeID = int32(time.Now().Unix())
+	reply.Meta.MessageSequenceID =int32(time.Now().Unix())
+	reply.Data.Coin = c.user.Profile.Coin
+	reply.Data.Level = c.user.Profile.Level
+	reply.Data.Diamond = c.user.Profile.Diamond
+	reply.Data.Exp = c.user.Profile.Experience
+	c.SendMsg(reply)
 	return
 }
 func (c *GameClient) persistProfile() (err error) {

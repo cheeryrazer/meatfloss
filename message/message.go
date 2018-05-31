@@ -480,9 +480,9 @@ const MsgMyCoolingNotify int32 = 3811
 type CooliNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Upgrade     string `json:"upgrade"`
-		UpgradeTime int    `json:"upgradeTime"`
-		InitTemperature int `json:"inittemperature"`
+		Upgrade         string `json:"upgrade"`
+		UpgradeTime     int    `json:"upgradeTime"`
+		InitTemperature int    `json:"inittemperature"`
 	} `json:"data"`
 }
 
@@ -571,6 +571,17 @@ type ClickStatusReq struct {
 			Status            int   `json:"status"`            // 物品Id
 			MessageSequenceID int64 `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 		} `json:"status"`
+	} `json:"data"`
+}
+
+//  ReplyUserNotify ...
+type ReplyUserNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Level            int `json:"level"`            // 等级
+		Exp               int    `json:"exp"`               // 经验
+		Coin            int    `json:"coin"`            // 金币
+		Diamond 		int  `json:"diamond"` //钻石
 	} `json:"data"`
 }
 
