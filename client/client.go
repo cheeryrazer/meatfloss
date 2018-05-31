@@ -658,17 +658,17 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 					//此物品在背包中存在
 					GoodsNum := strconv.Itoa(goods.GoodsNum)
 					if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
-						materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+						materialNeed += gameconf.AllGoods[goods.GoodsID].Name + "数量不足：需要" + GoodsNum + "个！"
 						Whether = 1
 					}
 				} else {
 					//物品在背包中不存在
 					GoodsNum := strconv.Itoa(goods.GoodsNum)
 					//if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
-					materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+					materialNeed += gameconf.AllGoods[goods.GoodsID].Name + "数量不足：需要" + GoodsNum + "个！"
 					Whether = 1
 				}
-
+                                  
 			}
 		}
 		if Whether == 1 {
@@ -678,7 +678,9 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			c.SendMsg(reply)
 			return
 		} else {
-			c.user.GuajiProfile.Upgrade = 2
+			if(c.user.GuajiProfile.Upgrade !=1){
+				c.user.GuajiProfile.Upgrade = 2
+			}    
 			reply.Data.MachineUpgradeType = "yes"
 			reply.Data.MachineUpgradeMessage = "正在升级"
 			c.SendMsg(reply)
