@@ -155,7 +155,7 @@ func (c *GameClient) checkClickoutputs() {
 				fmt.Println("字符串转换成整数失败")
 			}
 			reply := &message.ClickStatusReq{}
-			reply.Meta.MessageType = "AutoPickReq"
+			reply.Meta.MessageType = "ReplyPickReq"
 			reply.Data.Status.Status = 2
 			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
 			c.SendMsg(reply)
