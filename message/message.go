@@ -482,6 +482,7 @@ type CooliNotify struct {
 	Data struct {
 		Upgrade     string `json:"upgrade"`
 		UpgradeTime int    `json:"upgradeTime"`
+		InitTemperature int `json:"inittemperature"`
 	} `json:"data"`
 }
 

@@ -208,12 +208,20 @@ func (c *GameClient) checkCooding() {
 	if c.user.GuajiProfile.CDTemperature == 0 {
 		return
 	}
+			//取出当前的等级
+			level := c.user.GuajiProfile.MachineLevel
+			//根据等级取出当前的机器的结算数据
+			machine := gameconf.AllGuajis
+			// 默认等级0+1
+			machineInfo := machine[level]
+			//取出机器温度
 	msg := &message.CooliNotify{}
 	msg.Meta.MessageType = "CooliNotify"
 	msg.Meta.MessageTypeID = message.MsgMyCoolingNotify
 	msg.Meta.MessageSequenceID = 201
 	msg.Data.Upgrade = "正在降温中"
 	msg.Data.UpgradeTime = c.user.GuajiProfile.CDTemperature
+	msg.Data.InitTemperature = machineInfo.InitialTemperature
 	c.SendMsg(msg)
 	return
 }
