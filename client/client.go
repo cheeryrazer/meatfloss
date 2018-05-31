@@ -1258,11 +1258,14 @@ func (c *GameClient) PushUserNotify() (err error) {
 	reply := &message.ReplyUserNotify{}
 	reply.Meta.MessageType = "ReplyUserNotify"
 	reply.Meta.MessageTypeID = int32(time.Now().Unix())
-	reply.Meta.MessageSequenceID =int32(time.Now().Unix())
+	reply.Meta.MessageSequenceID = int32(time.Now().Unix())
 	reply.Data.Coin = c.user.Profile.Coin
 	reply.Data.Level = c.user.Profile.Level
 	reply.Data.Diamond = c.user.Profile.Diamond
 	reply.Data.Exp = c.user.Profile.Experience
+	lv := c.user.Profile.Level
+	nextExp := gameconf.AllHierarchical[lv-1].EssentialExperience
+	reply.Data.NextExp = nextExp
 	c.SendMsg(reply)
 	return
 }
