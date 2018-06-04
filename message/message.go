@@ -181,6 +181,22 @@ type LoginReply struct {
 		Dummy string `json:"dummy"`
 	} `json:"data"`
 }
+const MsgLoginInitReply int32 = 2500
+type LoginInitReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Level              int     `json:"level"` // 等级
+		Exp                int     `json:"exp"`   // 经验
+		NextExp            int     `json:"nextExp"`
+		Coin               int     `json:"coin"`    // 金币
+		Diamond            int     `json:"diamond"` //钻石
+		MachineLevel       int     `json:"machineLevel"`
+		CDTemperature      int     `json:"cdTemperature"`
+		Temperature        float64 `json:"temperature"`
+		TemperaturePercent float64 `json:"temperaturePercent"`
+	} `json:"data"`
+
+}
 
 // +++++++++++++
 
@@ -578,11 +594,30 @@ type ClickStatusReq struct {
 type ReplyUserNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Level            int `json:"level"`            // 等级
-		Exp               int    `json:"exp"`               // 经验
-		NextExp  int    `json:"nextexp"`
-		Coin            int    `json:"coin"`            // 金币
-		Diamond 		int  `json:"diamond"` //钻石
+		Level   int `json:"level"` // 等级
+		Exp     int `json:"exp"`   // 经验
+		NextExp int `json:"nextexp"`
+		Coin    int `json:"coin"`    // 金币
+		Diamond int `json:"diamond"` //钻石
+	} `json:"data"`
+}
+
+// MsgTypePickCoinReq ...
+const MsgTypePickCoinReq int32 = 7400
+
+// PickCoinReq ...
+type PickCoinReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Coin int `json:"coin"`
+	} `json:"data"`
+}
+
+// ReplyPickCoinReq ...
+type ReplyPickCoinReq struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Coin int `json:"coin"`
 	} `json:"data"`
 }
 

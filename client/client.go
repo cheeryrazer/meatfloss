@@ -573,6 +573,8 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandlePickReq(metaData, rawMsg)
 	case message.MsgTypeMachineUpgradeReq:
 		return c.HandleMachineUpgradeReq(metaData, rawMsg)
+	case message.MsgTypePickCoinReq:
+		return c.HandlePickCoinReq(metaData, rawMsg)
 	}
 
 	return
@@ -1235,8 +1237,8 @@ func (c *GameClient) AddExpToUser(exp int) (err error) {
 
 // AddCoinToUser ...
 func (c *GameClient) AddCoinToUser(coin int) (err error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	// c.lock.Lock()
+	// defer c.lock.Unlock()
 	c.user.Profile.Coin += coin
 	c.persistProfile()
 	c.PushUserNotify()
@@ -1264,7 +1266,14 @@ func (c *GameClient) PushUserNotify() (err error) {
 	reply.Data.Diamond = c.user.Profile.Diamond
 	reply.Data.Exp = c.user.Profile.Experience
 	lv := c.user.Profile.Level
-	nextExp := gameconf.AllHierarchical[lv-1].EssentialExperience
+	ln := len(gameconf.AllHierarchical)
+	var nextExp int
+	if lv >= ln {
+		nextExp = gameconf.AllHierarchical[ln-1].EssentialExperience
+	} else {
+		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
+	}
+
 	reply.Data.NextExp = nextExp
 	c.SendMsg(reply)
 	return
@@ -1469,6 +1478,32 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 	c.SendMsg(reply)
 	return
 }
+
+// HandlePickCoinReq ...
+func (c *GameClient) HandlePickCoinReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	req := &message.PickCoinReq{}
+	reply := &message.ReplyPickCoinReq{}
+	err = json.Unmarshal(rawMsg, req)
+	fmt.Println("111")
+	if err != nil {
+		fmt.Println("222")
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "invalid request"
+		c.SendMsg(reply)
+		return
+	}
+	err = c.AddCoinToUser(req.Data.Coin)
+	fmt.Println("3333")
+	if err != nil {
+		reply.Meta.Error = true
+		reply.Meta.ErrorMessage = "拾取金币失败"
+		c.SendMsg(reply)
+		return
+	}
+	reply.Data.Coin = c.user.Profile.Coin
+	c.SendMsg(reply)
+	return
+}
 func (c *GameClient) persistPick(goodID string, num int) {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
@@ -1524,7 +1559,27 @@ func (c *GameClient) AfterLogin() (err error) {
 	if err != nil {
 		return
 	}
-
+	reply := &message.LoginInitReply{}
+	reply.Meta.MessageType="LoginInitReply"
+	reply.Meta.MessageTypeID=message.MsgLoginInitReply
+	reply.Data.MachineLevel = c.user.GuajiProfile.MachineLevel
+	reply.Data.Level = c.user.Profile.Level
+	reply.Data.Exp = c.user.Profile.Experience
+	lv := c.user.Profile.Level
+	ln := len(gameconf.AllHierarchical)
+	var nextExp int
+	if lv >= ln {
+		nextExp = gameconf.AllHierarchical[ln].EssentialExperience
+	} else {
+		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
+	}
+	reply.Data.NextExp = nextExp
+	reply.Data.Coin = c.user.Profile.Coin
+	reply.Data.Diamond = c.user.Profile.Diamond
+	reply.Data.CDTemperature = c.user.GuajiProfile.CDTemperature
+	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
+	reply.Data.TemperaturePercent = c.user.GuajiProfile.TemperaturePercent
+	c.SendMsg(reply)
 	return
 }
 
