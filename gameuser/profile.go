@@ -11,8 +11,8 @@ type Profile struct {
 	Intimacy     int
 	Stamina      int
 	Experience   int
-	Coin		 int
-	Diamond		 int
+	// Coin		 int
+	// Diamond		 int
 
 }
 

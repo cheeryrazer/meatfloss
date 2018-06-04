@@ -181,7 +181,9 @@ type LoginReply struct {
 		Dummy string `json:"dummy"`
 	} `json:"data"`
 }
+
 const MsgLoginInitReply int32 = 2500
+
 type LoginInitReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
@@ -195,7 +197,6 @@ type LoginInitReply struct {
 		Temperature        float64 `json:"temperature"`
 		TemperaturePercent float64 `json:"temperaturePercent"`
 	} `json:"data"`
-
 }
 
 // +++++++++++++
@@ -609,7 +610,8 @@ const MsgTypePickCoinReq int32 = 7400
 type PickCoinReq struct {
 	MetaData ReqMetaData `json:"meta"`
 	Data     struct {
-		Coin int `json:"coin"`
+		Num  int `json:"num"`
+		Type int `json:"type"` //1.金币2钻石
 	} `json:"data"`
 }
 

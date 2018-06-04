@@ -155,6 +155,7 @@ func (c *GameClient) checkClickoutputs() {
 				fmt.Println("字符串转换成整数失败")
 			}
 			c.persistPick(v.GoodID, b)
+			c.PushUserNotify()
 		}
 		c.user.ClickOutputBox.ClickOutputs = make([]*common.ClickOutputInfo, 0)
 		c.persistClikOutput()
@@ -173,6 +174,7 @@ func (c *GameClient) checkClickoutputs() {
 			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
 			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
+			c.PushUserNotify()
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			fmt.Println(i)
 
@@ -573,8 +575,6 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandlePickReq(metaData, rawMsg)
 	case message.MsgTypeMachineUpgradeReq:
 		return c.HandleMachineUpgradeReq(metaData, rawMsg)
-	case message.MsgTypePickCoinReq:
-		return c.HandlePickCoinReq(metaData, rawMsg)
 	}
 
 	return
@@ -1236,24 +1236,24 @@ func (c *GameClient) AddExpToUser(exp int) (err error) {
 }
 
 // AddCoinToUser ...
-func (c *GameClient) AddCoinToUser(coin int) (err error) {
-	// c.lock.Lock()
-	// defer c.lock.Unlock()
-	c.user.Profile.Coin += coin
-	c.persistProfile()
-	c.PushUserNotify()
-	return
-}
+// func (c *GameClient) AddCoinToUser(coin int) (err error) {
+// 	// c.lock.Lock()
+// 	// defer c.lock.Unlock()
+// 	c.user.Profile.Coin += coin
+// 	c.persistProfile()
+// 	c.PushUserNotify()
+// 	return
+// }
 
-// AddDiamondToUser ...
-func (c *GameClient) AddDiamondToUser(d int) (err error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.user.Profile.Diamond += d
-	c.persistProfile()
-	c.PushUserNotify()
-	return
-}
+// // AddDiamondToUser ...
+// func (c *GameClient) AddDiamondToUser(d int) (err error) {
+// 	c.lock.Lock()
+// 	defer c.lock.Unlock()
+// 	c.user.Profile.Diamond += d
+// 	c.persistProfile()
+// 	c.PushUserNotify()
+// 	return
+// }
 
 // AddDiamondToUser ...
 func (c *GameClient) PushUserNotify() (err error) {
@@ -1261,9 +1261,16 @@ func (c *GameClient) PushUserNotify() (err error) {
 	reply.Meta.MessageType = "ReplyUserNotify"
 	reply.Meta.MessageTypeID = int32(time.Now().Unix())
 	reply.Meta.MessageSequenceID = int32(time.Now().Unix())
-	reply.Data.Coin = c.user.Profile.Coin
+	goods := c.user.Bag.Cells
+	for _, v := range goods {
+		if v.GoodsID == "wp0002" {
+			reply.Data.Coin = v.Count
+		}
+		if v.GoodsID == "wp0001" {
+			reply.Data.Diamond = v.Count
+		}
+	}
 	reply.Data.Level = c.user.Profile.Level
-	reply.Data.Diamond = c.user.Profile.Diamond
 	reply.Data.Exp = c.user.Profile.Experience
 	lv := c.user.Profile.Level
 	ln := len(gameconf.AllHierarchical)
@@ -1473,6 +1480,7 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 		}
 	}
 	c.persistPick(req.Data.GoodID, req.Data.Num)
+	c.PushUserNotify()
 	c.user.GuajiProfile.CDPick = 0
 
 	c.SendMsg(reply)
@@ -1480,30 +1488,29 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 }
 
 // HandlePickCoinReq ...
-func (c *GameClient) HandlePickCoinReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
-	req := &message.PickCoinReq{}
-	reply := &message.ReplyPickCoinReq{}
-	err = json.Unmarshal(rawMsg, req)
-	fmt.Println("111")
-	if err != nil {
-		fmt.Println("222")
-		reply.Meta.Error = true
-		reply.Meta.ErrorMessage = "invalid request"
-		c.SendMsg(reply)
-		return
-	}
-	err = c.AddCoinToUser(req.Data.Coin)
-	fmt.Println("3333")
-	if err != nil {
-		reply.Meta.Error = true
-		reply.Meta.ErrorMessage = "拾取金币失败"
-		c.SendMsg(reply)
-		return
-	}
-	reply.Data.Coin = c.user.Profile.Coin
-	c.SendMsg(reply)
-	return
-}
+// func (c *GameClient) HandlePickCoinReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+// 	req := &message.PickCoinReq{}
+// 	reply := &message.ReplyPickCoinReq{}
+// 	err = json.Unmarshal(rawMsg, req)
+// 	fmt.Println("111")
+// 	if err != nil {
+// 		fmt.Println("222")
+// 		reply.Meta.Error = true
+// 		reply.Meta.ErrorMessage = "invalid request"
+// 		c.SendMsg(reply)
+// 		return
+// 	}
+// 	fmt.Println("3333")
+// 	if err != nil {
+// 		reply.Meta.Error = true
+// 		reply.Meta.ErrorMessage = "拾取金币失败"
+// 		c.SendMsg(reply)
+// 		return
+// 	}
+// 	reply.Data.Coin = c.user.Profile.Coin
+// 	c.SendMsg(reply)
+// 	return
+// }
 func (c *GameClient) persistPick(goodID string, num int) {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
@@ -1560,8 +1567,8 @@ func (c *GameClient) AfterLogin() (err error) {
 		return
 	}
 	reply := &message.LoginInitReply{}
-	reply.Meta.MessageType="LoginInitReply"
-	reply.Meta.MessageTypeID=message.MsgLoginInitReply
+	reply.Meta.MessageType = "LoginInitReply"
+	reply.Meta.MessageTypeID = message.MsgLoginInitReply
 	reply.Data.MachineLevel = c.user.GuajiProfile.MachineLevel
 	reply.Data.Level = c.user.Profile.Level
 	reply.Data.Exp = c.user.Profile.Experience
@@ -1574,8 +1581,15 @@ func (c *GameClient) AfterLogin() (err error) {
 		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
 	}
 	reply.Data.NextExp = nextExp
-	reply.Data.Coin = c.user.Profile.Coin
-	reply.Data.Diamond = c.user.Profile.Diamond
+	goods := c.user.Bag.Cells
+	for _, v := range goods {
+		if v.GoodsID == "wp0002" {
+			reply.Data.Coin = v.Count
+		}
+		if v.GoodsID == "wp0001" {
+			reply.Data.Diamond = v.Count
+		}
+	}
 	reply.Data.CDTemperature = c.user.GuajiProfile.CDTemperature
 	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
 	reply.Data.TemperaturePercent = c.user.GuajiProfile.TemperaturePercent
