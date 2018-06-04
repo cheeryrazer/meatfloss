@@ -1436,6 +1436,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 		fmt.Println(err)
 	}
 	c.persistClikOutput()
+	c.persistGuajiProfile()
 	fmt.Println((c.user.ClickOutputBox))
 	c.SendMsg(reply)
 
