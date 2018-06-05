@@ -257,6 +257,23 @@ type LoginReply struct {
 	} `json:"data"`
 }
 
+const MsgLoginInitReply int32 = 2500
+
+type LoginInitReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Level              int     `json:"level"` // 等级
+		Exp                int     `json:"exp"`   // 经验
+		NextExp            int     `json:"nextExp"`
+		Coin               int     `json:"coin"`    // 金币
+		Diamond            int     `json:"diamond"` //钻石
+		MachineLevel       int     `json:"machineLevel"`
+		CDTemperature      int     `json:"cdTemperature"`
+		Temperature        float64 `json:"temperature"`
+		TemperaturePercent float64 `json:"temperaturePercent"`
+	} `json:"data"`
+}
+
 // +++++++++++++
 
 // MsgTypeWgLoginReply ...
@@ -680,8 +697,9 @@ const MsgMyCoolingNotify int32 = 3811
 type CooliNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Upgrade     string `json:"upgrade"`
-		UpgradeTime int    `json:"upgradeTime"`
+		Upgrade         string `json:"upgrade"`
+		UpgradeTime     int    `json:"upgradeTime"`
+		InitTemperature int    `json:"inittemperature"`
 	} `json:"data"`
 }
 
@@ -770,6 +788,38 @@ type ClickStatusReq struct {
 			Status            int   `json:"status"`            // 物品Id
 			MessageSequenceID int64 `json:"messageSequenceId"` //客户端在一个会话里面保持自增即可
 		} `json:"status"`
+	} `json:"data"`
+}
+
+//  ReplyUserNotify ...
+type ReplyUserNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Level   int `json:"level"` // 等级
+		Exp     int `json:"exp"`   // 经验
+		NextExp int `json:"nextexp"`
+		Coin    int `json:"coin"`    // 金币
+		Diamond int `json:"diamond"` //钻石
+	} `json:"data"`
+}
+
+// MsgTypePickCoinReq ...
+const MsgTypePickCoinReq int32 = 7400
+
+// PickCoinReq ...
+type PickCoinReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Num  int `json:"num"`
+		Type int `json:"type"` //1.金币2钻石
+	} `json:"data"`
+}
+
+// ReplyPickCoinReq ...
+type ReplyPickCoinReq struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Coin int `json:"coin"`
 	} `json:"data"`
 }
 

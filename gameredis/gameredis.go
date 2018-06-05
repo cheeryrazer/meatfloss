@@ -206,7 +206,7 @@ func LoadUser(userID int) *gameuser.User {
 		"collectionbox",   //11
 		"makebox"}...).Result()
 
-	fmt.Println(result)
+	// fmt.Println(result)
 	_ = err
 	_ = result
 	if err != nil {

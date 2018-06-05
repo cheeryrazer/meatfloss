@@ -17,11 +17,11 @@ func RandOutputInfo(c *gameuser.User) (err error) {
 	c.GuajiProfile.ClickTime = time.Now().Unix()
 	fmt.Println(c.GuajiProfile.CurrentTemperature)
 	//取出当前的等级
-	userProfile := c.Profile
+	level := c.GuajiProfile.MachineLevel
 	//根据等级取出当前的机器的结算数据
 	machine := gameconf.AllGuajis
 	// 默认等级0+1
-	machineInfo := machine[userProfile.Level+1]
+	machineInfo := machine[level]
 	//取出机器温度
 	// currentTemperature := c.GuajiProfile.CurrentTemperature
 	// 判断机器是否在cd

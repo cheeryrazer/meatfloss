@@ -111,11 +111,11 @@ func (c *GameClient) HandleHelper() {
 func (c *GameClient) coolTemperature() {
 	// fmt.Println(c.user.GuajiProfile.CurrentTemperature)
 	//取出当前的等级
-	userProfile := c.user.Profile
+	level := c.user.GuajiProfile.MachineLevel
 	//根据等级取出当前的机器的结算数据
 	machine := gameconf.AllGuajis
 	// 默认等级0+1
-	machineInfo := machine[userProfile.Level+1]
+	machineInfo := machine[level]
 	// if c.user.GuajiProfile.CDPick > 1 {
 	// 	c.user.GuajiProfile.CDPick--
 
@@ -147,6 +147,20 @@ func (c *GameClient) checkClickoutputs() {
 		return
 
 	}
+	if c.user.GuajiProfile.CDTemperature > 0 {
+		for _, v := range c.user.ClickOutputBox.ClickOutputs {
+
+			b, error := strconv.Atoi(v.GoodNum)
+			if error != nil {
+				fmt.Println("字符串转换成整数失败")
+			}
+			c.persistPick(v.GoodID, b)
+			c.PushUserNotify()
+		}
+		c.user.ClickOutputBox.ClickOutputs = make([]*common.ClickOutputInfo, 0)
+		c.persistClikOutput()
+		return
+	}
 	var newClickOutputs []*common.ClickOutputInfo
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int(timeNow)-v.Time >= 5 {
@@ -155,11 +169,12 @@ func (c *GameClient) checkClickoutputs() {
 				fmt.Println("字符串转换成整数失败")
 			}
 			reply := &message.ClickStatusReq{}
-			reply.Meta.MessageType = "PickReq"
+			reply.Meta.MessageType = "ReplyPickReq"
 			reply.Data.Status.Status = 2
 			reply.Data.Status.MessageSequenceID = v.MessageSequenceID
 			c.SendMsg(reply)
 			c.persistPick(v.GoodID, b)
+			c.PushUserNotify()
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			fmt.Println(i)
 
@@ -193,13 +208,20 @@ func (c *GameClient) checkCooding() {
 	if c.user.GuajiProfile.CDTemperature == 0 {
 		return
 	}
-	c.user.GuajiProfile.CDTemperature--
+	//取出当前的等级
+	level := c.user.GuajiProfile.MachineLevel
+	//根据等级取出当前的机器的结算数据
+	machine := gameconf.AllGuajis
+	// 默认等级0+1
+	machineInfo := machine[level]
+	//取出机器温度
 	msg := &message.CooliNotify{}
 	msg.Meta.MessageType = "CooliNotify"
 	msg.Meta.MessageTypeID = message.MsgMyCoolingNotify
 	msg.Meta.MessageSequenceID = 201
 	msg.Data.Upgrade = "正在降温中"
 	msg.Data.UpgradeTime = c.user.GuajiProfile.CDTemperature
+	msg.Data.InitTemperature = machineInfo.InitialTemperature
 	c.SendMsg(msg)
 	return
 }
@@ -958,14 +980,14 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 					//此物品在背包中存在
 					GoodsNum := strconv.Itoa(goods.GoodsNum)
 					if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
-						materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+						materialNeed += gameconf.AllGoods[goods.GoodsID].Name + "数量不足：需要" + GoodsNum + "个！"
 						Whether = 1
 					}
 				} else {
 					//物品在背包中不存在
 					GoodsNum := strconv.Itoa(goods.GoodsNum)
 					//if c.user.Bag.Cells[gameconf.AllSuperGoods[goods.GoodsID].UniqueID].Count < goods.GoodsNum {
-					materialNeed += "需要" + gameconf.AllGoods[goods.GoodsID].Name + ":" + GoodsNum + "个数量不足;"
+					materialNeed += gameconf.AllGoods[goods.GoodsID].Name + "数量不足：需要" + GoodsNum + "个！"
 					Whether = 1
 				}
 
@@ -978,7 +1000,9 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 			c.SendMsg(reply)
 			return
 		} else {
-			c.user.GuajiProfile.Upgrade = 2
+			if c.user.GuajiProfile.Upgrade != 1 {
+				c.user.GuajiProfile.Upgrade = 2
+			}
 			reply.Data.MachineUpgradeType = "yes"
 			reply.Data.MachineUpgradeMessage = "正在升级"
 			c.SendMsg(reply)
@@ -1485,40 +1509,92 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 }
 
 // AddExpToUser ...
-func (c *GameClient) AddExpToUser(exp int) {
+func (c *GameClient) AddExpToUser(exp int) (err error) {
 	nowExp := c.user.Profile.Experience + exp
+
 	// nextExp:=AllHierarchical[c.user.Profile.Level+1]
 	var AllHierarchicals []int
-
+	AllHierarchicals = append(AllHierarchicals, 0)
 	for _, v := range gameconf.AllHierarchical {
 		AllHierarchicals = append(AllHierarchicals, v.EssentialExperience)
 	}
-
-	// for i:=0;i<le-1;i++{
-	// 	if AllHierarchicals[i]>AllHierarchicals[i+1]{
-	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 		AllHierarchicals[i+1]= AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 		AllHierarchicals[i]=AllHierarchicals[i]-AllHierarchicals[i+1]
-	// 	}
-	// }
-	fmt.Println("---22---22--2")
-	fmt.Println(nowExp)
 	sort.Ints(AllHierarchicals)
-	for index, v := range AllHierarchicals {
-		if index >= c.user.Profile.Level {
-			if nowExp >= v {
-				c.lock.Lock()
-				c.user.Profile.Experience = nowExp - v
-				c.user.Profile.Level = (index + 1)
-				c.lock.Unlock()
-			} else {
-				c.user.Profile.Experience = nowExp
-				break
+	fmt.Println(AllHierarchicals)
+	ln := len(AllHierarchicals)
+	if nowExp < AllHierarchicals[ln-1] {
+		c.user.Profile.Experience = nowExp
+	} else {
+		c.user.Profile.Experience = AllHierarchicals[ln-1]
+		c.user.Profile.Level = ln
+		c.persistProfile()
+		c.PushUserNotify()
+		return
+	}
+	for i := 0; i < ln-1; i++ {
+		if i >= c.user.Profile.Level {
+
+			if nowExp >= AllHierarchicals[i] && nowExp < AllHierarchicals[i+1] {
+				c.user.Profile.Experience = nowExp - AllHierarchicals[i]
+				c.user.Profile.Level = i + 1
 			}
+
 		}
 
 	}
+	fmt.Println(c.user.Profile.Experience)
+	c.PushUserNotify()
 	c.persistProfile()
+	return
+}
+
+// AddCoinToUser ...
+// func (c *GameClient) AddCoinToUser(coin int) (err error) {
+// 	// c.lock.Lock()
+// 	// defer c.lock.Unlock()
+// 	c.user.Profile.Coin += coin
+// 	c.persistProfile()
+// 	c.PushUserNotify()
+// 	return
+// }
+
+// // AddDiamondToUser ...
+// func (c *GameClient) AddDiamondToUser(d int) (err error) {
+// 	c.lock.Lock()
+// 	defer c.lock.Unlock()
+// 	c.user.Profile.Diamond += d
+// 	c.persistProfile()
+// 	c.PushUserNotify()
+// 	return
+// }
+
+// AddDiamondToUser ...
+func (c *GameClient) PushUserNotify() (err error) {
+	reply := &message.ReplyUserNotify{}
+	reply.Meta.MessageType = "ReplyUserNotify"
+	reply.Meta.MessageTypeID = int32(time.Now().Unix())
+	reply.Meta.MessageSequenceID = int32(time.Now().Unix())
+	goods := c.user.Bag.Cells
+	for _, v := range goods {
+		if v.GoodsID == "wp0002" {
+			reply.Data.Coin = v.Count
+		}
+		if v.GoodsID == "wp0001" {
+			reply.Data.Diamond = v.Count
+		}
+	}
+	reply.Data.Level = c.user.Profile.Level
+	reply.Data.Exp = c.user.Profile.Experience
+	lv := c.user.Profile.Level
+	ln := len(gameconf.AllHierarchical)
+	var nextExp int
+	if lv >= ln {
+		nextExp = gameconf.AllHierarchical[ln-1].EssentialExperience
+	} else {
+		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
+	}
+
+	reply.Data.NextExp = nextExp
+	c.SendMsg(reply)
 	return
 }
 func (c *GameClient) persistProfile() (err error) {
@@ -1711,12 +1787,18 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	reply.Data.Output.Num = c.user.ClickOutputBox.ClickOutput.GoodNum
 	reply.Data.Output.CD = c.user.GuajiProfile.CDTemperature
 	reply.Data.Output.Percent = c.user.GuajiProfile.TemperaturePercent
+	reply.Data.Output.MessageSequenceID = c.user.GuajiProfile.MessageSequenceID
+	c.user.GuajiProfile.MessageSequenceID++
 	// fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
 	// }
-
+	err = c.AddExpToUser(200)
+	if err != nil {
+		fmt.Println(err)
+	}
 	c.persistClikOutput()
+	c.persistGuajiProfile()
 	fmt.Println((c.user.ClickOutputBox))
 	c.SendMsg(reply)
 
@@ -1753,6 +1835,7 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 	reply.Data.Status.GoodID = req.Data.GoodID
 	reply.Data.Status.Num = req.Data.Num
 	reply.Data.Status.Status = 2
+	reply.Data.Status.MessageSequenceID = int64(metaData.MessageSequenceID)
 	for i, v := range c.user.ClickOutputBox.ClickOutputs {
 		if int64(metaData.MessageSequenceID) == v.MessageSequenceID {
 			c.user.ClickOutputBox.ClickOutputs = append(c.user.ClickOutputBox.ClickOutputs[:i], c.user.ClickOutputBox.ClickOutputs[i+1:]...)
@@ -1760,11 +1843,37 @@ func (c *GameClient) HandlePickReq(metaData message.ReqMetaData, rawMsg []byte) 
 		}
 	}
 	c.persistPick(req.Data.GoodID, req.Data.Num)
+	c.PushUserNotify()
 	c.user.GuajiProfile.CDPick = 0
 
 	c.SendMsg(reply)
 	return
 }
+
+// HandlePickCoinReq ...
+// func (c *GameClient) HandlePickCoinReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+// 	req := &message.PickCoinReq{}
+// 	reply := &message.ReplyPickCoinReq{}
+// 	err = json.Unmarshal(rawMsg, req)
+// 	fmt.Println("111")
+// 	if err != nil {
+// 		fmt.Println("222")
+// 		reply.Meta.Error = true
+// 		reply.Meta.ErrorMessage = "invalid request"
+// 		c.SendMsg(reply)
+// 		return
+// 	}
+// 	fmt.Println("3333")
+// 	if err != nil {
+// 		reply.Meta.Error = true
+// 		reply.Meta.ErrorMessage = "拾取金币失败"
+// 		c.SendMsg(reply)
+// 		return
+// 	}
+// 	reply.Data.Coin = c.user.Profile.Coin
+// 	c.SendMsg(reply)
+// 	return
+// }
 func (c *GameClient) persistPick(goodID string, num int) {
 	newUser := &gameuser.User{}
 	newUser.UserID = c.UserID
@@ -1820,7 +1929,34 @@ func (c *GameClient) AfterLogin() (err error) {
 	if err != nil {
 		return
 	}
-
+	reply := &message.LoginInitReply{}
+	reply.Meta.MessageType = "LoginInitReply"
+	reply.Meta.MessageTypeID = message.MsgLoginInitReply
+	reply.Data.MachineLevel = c.user.GuajiProfile.MachineLevel
+	reply.Data.Level = c.user.Profile.Level
+	reply.Data.Exp = c.user.Profile.Experience
+	lv := c.user.Profile.Level
+	ln := len(gameconf.AllHierarchical)
+	var nextExp int
+	if lv >= ln {
+		nextExp = gameconf.AllHierarchical[ln].EssentialExperience
+	} else {
+		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
+	}
+	reply.Data.NextExp = nextExp
+	goods := c.user.Bag.Cells
+	for _, v := range goods {
+		if v.GoodsID == "wp0002" {
+			reply.Data.Coin = v.Count
+		}
+		if v.GoodsID == "wp0001" {
+			reply.Data.Diamond = v.Count
+		}
+	}
+	reply.Data.CDTemperature = c.user.GuajiProfile.CDTemperature
+	reply.Data.Temperature = c.user.GuajiProfile.CurrentTemperature
+	reply.Data.TemperaturePercent = c.user.GuajiProfile.TemperaturePercent
+	c.SendMsg(reply)
 	return
 }
 
@@ -1950,11 +2086,11 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 	}
 	if c.user.GuajiProfile.CDTemperature > 0 {
 		//取出当前的等级
-		userProfile := c.user.Profile
+		level := c.user.GuajiProfile.MachineLevel
 		//根据等级取出当前的机器的结算数据
 		machine := gameconf.AllGuajis
 		// 默认等级0+1
-		machineInfo := machine[userProfile.Level+1]
+		machineInfo := machine[level]
 		//取出机器温度
 		fmt.Println(c.user.GuajiProfile.CurrentTemperature)
 		fmt.Println("测试----！")
@@ -1968,11 +2104,11 @@ func (c *GameClient) LoadGuajiProfile() (err error) {
 	} else {
 		TimeDecr := timeNow - c.user.GuajiProfile.ClickTime
 		//取出当前的等级
-		userProfile := c.user.Profile
+		level := c.user.GuajiProfile.MachineLevel
 		//根据等级取出当前的机器的结算数据
 		machine := gameconf.AllGuajis
 		// 默认等级0+1
-		machineInfo := machine[userProfile.Level+1]
+		machineInfo := machine[level]
 		c.user.GuajiProfile.CurrentTemperature -= float64(TimeDecr / int64(machineInfo.CDPerDegree))
 		if c.user.GuajiProfile.CurrentTemperature < float64(machineInfo.InitialTemperature) {
 			c.user.GuajiProfile.CurrentTemperature = float64(machineInfo.InitialTemperature)
