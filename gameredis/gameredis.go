@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"meatfloss/common"
+	"meatfloss/config"
 	"meatfloss/gameuser"
 	"meatfloss/message"
 	"strconv"
-
-	"meatfloss/config"
 
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
@@ -93,7 +92,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.EventBox != nil {
 		data, err := json.Marshal(user.EventBox)
 		if err == nil {
-	
+
 			fields["eventbox"] = string(data)
 		}
 	}
@@ -101,7 +100,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.Layout != nil {
 		data, err := json.Marshal(user.Layout)
 		if err == nil {
-	
+
 			fields["layout"] = string(data)
 		}
 	}
@@ -109,7 +108,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.LoginTime != nil {
 		data, err := json.Marshal(user.LoginTime)
 		if err == nil {
-	
+
 			fields["logintime"] = string(data)
 		}
 	}
@@ -117,7 +116,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.GuajiOutputBox != nil {
 		data, err := json.Marshal(user.GuajiOutputBox)
 		if err == nil {
-		
+
 			fields["guajioutputbox"] = string(data)
 		}
 	}
@@ -125,7 +124,7 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 	if user.ClickOutputBox != nil {
 		data, err := json.Marshal(user.ClickOutputBox)
 		if err == nil {
-	
+
 			fields["clickoutputbox"] = string(data)
 		}
 	}
@@ -141,6 +140,20 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 		data, err := json.Marshal(user.GuajiProfile)
 		if err == nil {
 			fields["guajiprofile"] = string(data)
+		}
+	}
+
+	if user.CollectionBox != nil {
+		data, err := json.Marshal(user.CollectionBox)
+		if err == nil {
+			fields["collectionbox"] = string(data)
+		}
+	}
+
+	if user.MakeBox != nil {
+		data, err := json.Marshal(user.MakeBox)
+		if err == nil {
+			fields["makebox"] = string(data)
 		}
 	}
 
@@ -164,6 +177,8 @@ func PersistUser(userID int, user *gameuser.User) (err error) {
 // GuajiProfile  *GuajiProfile
 
 // SaveBagInfo ..
+// CollectionBox  *CollectionBox
+// MakeBox      *MakeBox
 func SaveBagInfo(userID int, bag *common.Bag) (err error) {
 	bagKey := "role:bag"
 	userIDStr := strconv.Itoa(userID)
@@ -186,8 +201,11 @@ func LoadUser(userID int) *gameuser.User {
 		"logintime",       // 6
 		"guajioutputbox",  // 7
 		"guajisettlement", // 8
-		"guajiprofile",
-		"clickoutputbox"}...).Result()
+		"guajiprofile",    //9
+		"clickoutputbox",  //10
+		"collectionbox",   //11
+		"makebox"}...).Result()
+
 	fmt.Println(result)
 	_ = err
 	_ = result
@@ -351,6 +369,34 @@ func LoadUser(userID int) *gameuser.User {
 			}
 		}
 	}
+	//CollectionBox
+	if result[11] != nil {
+		data, ok := result[11].(string)
+		if ok && data != "" {
+			obj := &gameuser.CollectionBox{}
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.CollectionBox = obj
+
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+	//MakeBox
+	if result[12] != nil {
+		data, ok := result[12].(string)
+		if ok && data != "" {
+			obj := &gameuser.MakeBox{}
+			err := json.Unmarshal([]byte(data), obj)
+			if err == nil {
+				user.MakeBox = obj
+			} else {
+				glog.Warning("json.Unmarshal failed")
+			}
+		}
+	}
+
 	if user.Profile == nil {
 		user.Profile = gameuser.NewProfile(userID)
 	}
@@ -393,6 +439,14 @@ func LoadUser(userID int) *gameuser.User {
 
 	if user.GuajiProfile == nil {
 		user.GuajiProfile = gameuser.NewGuajiProfile(userID)
+	}
+
+	if user.CollectionBox == nil {
+		user.CollectionBox = gameuser.NewCollectionBox(userID)
+	}
+
+	if user.MakeBox == nil {
+		user.MakeBox = gameuser.NewMakeBox(userID)
 	}
 
 	return user

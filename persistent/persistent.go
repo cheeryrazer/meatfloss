@@ -100,6 +100,14 @@ func AddUser(userID int, user *gameuser.User) {
 		oldUser.GuajiProfile = user.GuajiProfile
 	}
 
+	if user.CollectionBox != nil {
+		oldUser.CollectionBox = user.CollectionBox
+	}
+
+	if user.MakeBox != nil {
+		oldUser.MakeBox = user.MakeBox
+	}
+
 }
 
 // // GetUser ...

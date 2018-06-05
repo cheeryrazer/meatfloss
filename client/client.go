@@ -162,15 +162,12 @@ func (c *GameClient) checkClickoutputs() {
 			c.persistPick(v.GoodID, b)
 			fmt.Println(c.user.ClickOutputBox.ClickOutputs)
 			fmt.Println(i)
-	
 
-		}else{
+		} else {
 			newClickOutputs = append(newClickOutputs, v)
 		}
 	}
 	c.user.ClickOutputBox.ClickOutputs = make([]*common.ClickOutputInfo, 0)
-	fmt.Println(newClickOutputs)
-	fmt.Println("3172921712783128391")
 	c.user.ClickOutputBox.ClickOutputs = newClickOutputs
 	c.persistClikOutput()
 }
@@ -523,15 +520,19 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 	}
 
 	metaData := meta.Meta
-	if !c.logined && metaData.MessageType != "LoginReq" {
-		glog.Info("non-login message received before login.")
-		return
-	}
+	if !c.logined {
 
+		if metaData.MessageType != "LoginReq" && metaData.MessageType != "WgLoginReq" {
+			glog.Info("non-login message received before login.")
+			return
+		}
+	}
 	fmt.Printf("+%v", metaData)
 	switch metaData.MessageTypeID {
 	case message.MsgTypeLoginReq:
 		return c.HandleLoginReq(metaData, rawMsg)
+	case message.MsgTypeWgLoginReq:
+		return c.HandleWgLoginReq(metaData, rawMsg)
 	case message.MsgTypeMarkNewsAsReadReq:
 	//	return c.HandleMarkNewsAsReadReq(metaData, rawMsg)
 	case message.MsgTypeCreateTaskReq:
@@ -554,8 +555,318 @@ func (c *GameClient) HandleMessage(rawMsg []byte) (err error) {
 		return c.HandlePickReq(metaData, rawMsg)
 	case message.MsgTypeMachineUpgradeReq:
 		return c.HandleMachineUpgradeReq(metaData, rawMsg)
+	case message.MsgTypeWgReq:
+		return c.HandleWgReq(metaData, rawMsg)
+	case message.MsgTypeMakeLatticeReq:
+		return c.HandleMakeLatticeReq(metaData, rawMsg)
+	case message.MsgTypeCollectionReq:
+		return c.HandleCollectionReq(metaData, rawMsg)
+	case message.MsgTypeMakingReq:
+		return c.HandleMakingReq(metaData, rawMsg)
 	}
 
+	return
+}
+
+// HandleMakingReq ...
+func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	reply := &message.MakingNotify{}
+	reply.Meta.MessageType = "MakingNotify"
+	reply.Meta.MessageTypeID = message.MsgMakingNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	req := &message.MakingReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+	//req.Data.Type==1  1添加制作   2完成制作    3解锁
+	//制作的添加
+	if req.Data.Type == "1" {
+		//先判断背包中的物品是否满足
+		fmt.Println(gameconf.AllFurniture[req.Data.GoodsID].NeedMaterial[0].List[0].GoodsID)
+		material := gameconf.AllFurniture[req.Data.GoodsID]
+		num := len(material.NeedMaterial[0].List)
+		for a := 0; a < num; a++ {
+			//判断每件在背包中的数量
+			if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID]; ok {
+				//物品在背包中、
+				backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count
+				_ = backNum
+				if backNum < material.NeedMaterial[0].List[a].GoodsNum {
+					reply.Meta.Error = true
+					reply.Meta.ErrorMessage = "invalid request"
+					c.SendMsg(reply)
+					return
+				}
+			} else {
+				reply.Meta.Error = true
+				reply.Meta.ErrorMessage = "invalid request"
+				c.SendMsg(reply)
+				return
+			}
+		}
+		//更改背包中的数量
+		for a := 0; a < num; a++ {
+			c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
+		}
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllFurniture[req.Data.GoodsID].MaterialNeed
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllFurniture[req.Data.GoodsID].MakeTime
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].End = req.Data.GoodsID
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 1
+	}
+	//制作的完成
+	if req.Data.Type == "2" {
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = "0"
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].End = "0"
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 2
+	}
+	//解锁
+	if req.Data.Type == "3" {
+		//只能是被锁定的情况下才能被解锁
+		if c.user.MakeBox.Lattice[req.Data.Lattice-1].Type == 3 {
+			//判断钻石数
+			if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID]; ok {
+				//物品在背包中、
+				backNum := c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count
+				_ = backNum
+				if backNum < gameconf.AllLattice[req.Data.Lattice].UnlockPrice {
+					reply.Meta.Error = true
+					reply.Meta.ErrorMessage = "invalid request"
+					c.SendMsg(reply)
+					return
+				}
+			} else {
+				//钻石在背包中也没有
+				reply.Meta.Error = true
+				reply.Meta.ErrorMessage = "invalid request"
+				c.SendMsg(reply)
+				return
+			}
+			//更新背包中钻石的数量
+			c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count -= gameconf.AllLattice[req.Data.Lattice].UnlockPrice
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 2
+		}
+	}
+	//信息的发送
+	{
+		cpy := deepcopy.Copy(c.user.MakeBox)
+		mak, _ := cpy.(*gameuser.MakeBox)
+		reply.Data.Lattice = mak.Lattice
+	}
+	c.SendMsg(reply)
+	c.persistMaking()
+	return
+}
+
+func (c *GameClient) persistMaking() {
+
+	making := &gameuser.User{}
+
+	cpy := deepcopy.Copy(c.user.MakeBox)
+	mak, _ := cpy.(*gameuser.MakeBox)
+	making.MakeBox = mak
+	persistent.AddUser(c.UserID, making)
+
+}
+
+// HandleCollectionReq ...
+func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.CollectionNotify{}
+	reply.Meta.MessageType = "CollectionNotify"
+	reply.Meta.MessageTypeID = message.MsgCollectionNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	req := &message.CollectionReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+	//req.Data.Type   type 1添加收藏
+	Collection := c.user.CollectionBox
+	//先看是否已经书藏过了
+	num := len(Collection.Collections)
+	_ = num
+	base := 1
+	del := 0
+	_ = base
+	_ = del
+	if num > 0 {
+		for a := 0; a < num; a++ {
+			if Collection.Collections[a].GoodID == req.Data.GoodsID {
+				base = 2
+				del = a
+			}
+		}
+	}
+	//添加收藏
+	if req.Data.Type == "1" {
+		//如果base为1就添加收藏
+		if base == 1 {
+			Collection := &common.Collections{}
+			Collection.GoodID = req.Data.GoodsID
+			Collection.Img = req.Data.Img
+			c.user.CollectionBox.Collections = append(c.user.CollectionBox.Collections, Collection)
+		}
+	} else {
+		//取消收藏
+		if base == 2 {
+			if num > 0 {
+				for a := 0; a < num; a++ {
+					if del == a {
+						Collection.Collections = append(Collection.Collections[:a], Collection.Collections[a+1:]...)
+					}
+				}
+			}
+		}
+	}
+	//收藏的通知
+	{
+		cpy := deepcopy.Copy(c.user.CollectionBox)
+		collection, _ := cpy.(*gameuser.CollectionBox)
+		reply.Data.Collection = collection.Collections
+	}
+
+	c.SendMsg(reply)
+	c.persistCollection()
+	return
+}
+
+func (c *GameClient) persistCollection() {
+
+	Collection := &gameuser.User{}
+
+	cpy := deepcopy.Copy(c.user.CollectionBox)
+	collection, _ := cpy.(*gameuser.CollectionBox)
+	Collection.CollectionBox = collection
+	persistent.AddUser(c.UserID, Collection)
+
+}
+
+// HandleMakeLatticeReq ...
+func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+
+	reply := &message.MakeLatticNotify{}
+	reply.Meta.MessageType = "MakeLatticNotify"
+	reply.Meta.MessageTypeID = message.MsgMakeLatticeNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	req := &message.MakeLatticNotify{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+
+	//拿到服饰
+	temporaryApparel := make(map[string]string)
+	temporary := &message.MakeLatticeBack{}
+	_ = temporary
+	// _ = temporaryApparel
+	fmt.Println("我是衣服")
+	apparel := gameconf.AllApparels
+	num := len(apparel)
+	for j := 1; j <= num; j++ {
+		key := ""
+		if j <= 9 {
+			key = "fs000"
+		} else {
+			key = "fs00"
+		}
+		string := strconv.Itoa(j)
+		key += string
+
+		if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID]; ok {
+			//此物品在背包中存在
+			backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID].Count
+			_ = backNum
+			string := strconv.Itoa(backNum)
+			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + ";"
+
+		} else {
+			//背包中没有
+			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0;"
+		}
+	}
+	//拿到家具
+	temporaryFuniture := make(map[string]string)
+
+	funiture := gameconf.AllFurniture
+	numFun := len(funiture)
+	for j := 1; j <= numFun; j++ {
+		key := ""
+		if j <= 9 {
+			key = "jj000"
+		} else {
+			key = "jj00"
+		}
+		string := strconv.Itoa(j)
+		key += string
+		fmt.Println(funiture[key].UniqueID)
+		if _, ok := c.user.Bag.Cells[funiture[key].UniqueID]; ok {
+
+			backNum := c.user.Bag.Cells[funiture[key].UniqueID].Count
+			_ = backNum
+			string := strconv.Itoa(backNum)
+			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + ";"
+		} else {
+
+			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0;"
+		}
+	}
+	temporary.Furniture = temporaryFuniture
+	temporary.Clothes = temporaryApparel
+	{
+		cpy := deepcopy.Copy(temporary)
+		layout, _ := cpy.(*message.MakeLatticeBack)
+		reply.Data.MakeLatticeBack = layout
+	}
+	//收藏的通知
+	{
+		cpy := deepcopy.Copy(c.user.CollectionBox)
+		collection, _ := cpy.(*gameuser.CollectionBox)
+		reply.Data.Collection = collection.Collections
+	}
+	//制作的通知
+	{
+		cpy := deepcopy.Copy(c.user.MakeBox)
+		mak, _ := cpy.(*gameuser.MakeBox)
+		reply.Data.Lattice = mak.Lattice
+	}
+	c.SendMsg(reply)
+	return
+}
+
+// HandleWgReq ...
+func (c *GameClient) HandleWgReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	reply := &message.WgNotify{}
+	reply.Meta.MessageType = "WgNotify"
+	reply.Meta.MessageTypeID = message.MsgWgtNotify
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+	req := &message.ShowWgReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+	inta, err := strconv.Atoi(req.Data.Num)
+	userID, err := strconv.Atoi(req.Data.UserID)
+	_ = userID
+	//goodsID, err := strconv.Atoi(req.Data.GoodsID)
+
+	var goodsIDs []string
+	var goodsCounts []int
+	goodsIDs = append(goodsIDs, req.Data.GoodsID)
+	goodsCounts = append(goodsCounts, inta)
+	c.PutToBagBatch(goodsIDs, goodsCounts)
+
+	newUser := &gameuser.User{}
+	newUser.UserID = c.UserID
+
+	cpy := deepcopy.Copy(c.user.Bag)
+	bag, _ := cpy.(*common.Bag)
+	newUser.Bag = bag
+	persistent.AddUser(c.UserID, newUser)
+	reply.Data.Res = "success"
+	c.SendMsg(reply)
+	//persistent.AddUser(userID, newGuajiProfile)
 	return
 }
 
@@ -1273,6 +1584,52 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 	return
 }
 
+// HandleWgLoginReq ...
+func (c *GameClient) HandleWgLoginReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
+	if c.logined {
+		// multiple login disallowed.
+		return
+	}
+	req := &message.WgLoginReq{}
+	err = json.Unmarshal(rawMsg, req)
+	if err != nil {
+		return
+	}
+
+	{
+		if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
+			req.Data.Account = addr.IP.String()
+		}
+	}
+
+	reply := &message.WgLoginReply{}
+	reply.Meta.MessageType = "WgLoginReply"
+	reply.Meta.MessageTypeID = message.MsgTypeWgLoginReply
+	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
+
+	if len(req.Data.Account) < 2 || len(req.Data.Account) > 30 {
+		reply.Meta.ErrorMessage = "Authorize failed."
+		reply.Meta.Error = true
+		c.SendMsg(reply)
+		return errors.New("Authorize failed")
+	}
+
+	//如果是测试加数据的就已用户的ID为准，进行用户初始化信心的加载
+	userID, err := strconv.Atoi(req.Data.UserID)
+	// err = c.InitUser(userID)
+	// if err != nil {
+	// 	glog.Errorf("InitRole failed, userID: %d", userID)
+	// 	return errors.New("Authorize failed")
+	// }
+	c.logined = true
+	c.UserID = userID
+
+	Mgr.onNewLogin(c)
+	c.SendMsg(reply)
+	c.AfterLogin()
+	return
+}
+
 // HandleLoginReq ...
 func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
 
@@ -1296,14 +1653,17 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	reply.Meta.MessageType = "LoginReply"
 	reply.Meta.MessageTypeID = message.MsgTypeLoginReply
 	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
-	fmt.Printf("%v\n", req.Data.Account)
+
 	if len(req.Data.Account) < 2 || len(req.Data.Account) > 30 {
 		reply.Meta.ErrorMessage = "Authorize failed."
 		reply.Meta.Error = true
 		c.SendMsg(reply)
 		return errors.New("Authorize failed")
 	}
+
+	//下面是正常的登陆
 	userID, err := db.GetUserID(req.Data.Account)
+
 	if err != nil {
 		userID, err = db.CreateAccount(req.Data.Account)
 		if err != nil {
@@ -1318,10 +1678,11 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 			glog.Errorf("InitRole failed, userID: %d", userID)
 			return errors.New("Authorize failed")
 		}
+
 	}
+
 	c.logined = true
 	c.UserID = userID
-	_ = userID
 	Mgr.onNewLogin(c)
 	c.SendMsg(reply)
 	c.AfterLogin()
@@ -1784,12 +2145,27 @@ func (c *GameClient) InitUser(userID int) (err error) {
 	c.user.GuajiProfile.MachineLevel = 1
 	//初始化机器为不能升级的
 	c.user.GuajiProfile.Upgrade = 3
-
 	//默认背包中一个雇员
 	onet := &common.EmployeesInfo{}
 	onet.EmployeesID = "gy001"
 	c.user.Bag.BagEmployee = append(c.user.Bag.BagEmployee, onet)
+	//制作格子的初始化
+	lattice := gameconf.AllLattice
+	for k, v := range lattice {
+		_ = v
+		lat := &common.Lattice{}
+		lat.Coin = lattice[k].UnlockPrice
+		lat.OrderID = lattice[k].OrderID
+		//初始化开放一个制作的格子
+		if k == 1 {
+			lat.Type = 2
+		} else {
+			lat.Type = 3
+		}
+		lat.LatticeNum = lattice[k].ID
+		c.user.MakeBox.Lattice = append(c.user.MakeBox.Lattice, lat)
 
+	}
 	cpy := deepcopy.Copy(user)
 	newUser, _ := cpy.(*gameuser.User)
 	_ = newUser

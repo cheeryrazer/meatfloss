@@ -35,6 +35,8 @@ var (
 	AllEmployees map[string]*Employee
 	// AllHierarchical ...
 	AllHierarchical map[int]*Hierarchical
+	// AllLattice ...
+	AllLattice map[int]*Lattice
 )
 
 func init() {
@@ -49,6 +51,7 @@ func init() {
 	AllGuajis = make(map[int]*Guaji)
 	AllEmployees = make(map[string]*Employee)
 	AllHierarchical = make(map[int]*Hierarchical)
+	AllLattice = make(map[int]*Lattice)
 }
 
 // SuperGoods ...
@@ -85,7 +88,7 @@ type Goods struct {
 func LoadFromDatabase() (err error) {
 	loadGoods()
 	loadApparel()
-	loadFurniture()
+
 	loadNPCs()
 	loadTasks()
 	loadRandomEvents()
@@ -95,6 +98,8 @@ func LoadFromDatabase() (err error) {
 	loadGuaji()
 	loadEmployee()
 	loadHierarchical()
+	loadLattice()
+	loadFurniture()
 	return
 }
 
@@ -511,6 +516,7 @@ type Furniture struct {
 	Type             int    `json:"type"`               // type
 	OrderID          int    `json:"order_id"`           // order_id
 	ImageName        string `json:"image_name"`         // image_name
+	Icon             string `json:"icon"`               // iconc
 	ImageEffect      int    `json:"image_effect"`       // image_effect
 	Name             string `json:"name"`               // name
 	Description      string `json:"description"`        // description
@@ -525,8 +531,10 @@ type Furniture struct {
 	MotionGain       int    `json:"motion_gain"`        // motion_gain
 	Stars            int    `json:"stars"`              // stars
 	AllowPileup      int    `json:"allow_pileup"`       // allow_pileup
-
-	UniqueID int64
+	MakeTime         int    `json:"maketime"`           // maketime
+	MaterialNeed     string `json:"materialneed"`       // materialneed
+	NeedMaterial     []message.Guaji
+	UniqueID         int64
 }
 
 // loadFurniture ...
@@ -554,11 +562,39 @@ func loadFurniture() (err error) {
 			LovelyGain:       row.LovelyGain,
 			MotionGain:       row.MotionGain,
 			Stars:            row.Stars,
-			AllowPileup:      row.AllowPileup}
+			Icon:             row.Icon,
+			MaterialNeed:     row.MaterialNeed,
+			MakeTime:         row.MakeTime,
+			AllowPileup:      row.AllowPileup,
+			NeedMaterial:     make([]message.Guaji, 1)}
 
-		temp := strings.Replace(furniture.ID, "fs", "", -1)
+		temp := strings.Replace(furniture.ID, "jj", "", -1)
 		furniture.UniqueID, _ = strconv.ParseInt(temp, 10, 64)
 		furniture.UniqueID += 300000
+
+		//expList := []string{row.MaterialNeed}
+		guajiStrListSingle := []string{row.MaterialNeed}
+		for i, str := range guajiStrListSingle {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneGuaji := message.Guaji{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleGuaji{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneGuaji.List = append(oneGuaji.List, sw)
+						}
+					}
+				}
+			}
+			furniture.NeedMaterial[i] = oneGuaji
+		}
 		AllFurniture[furniture.ID] = furniture
 	}
 	utils.PrintJSON(AllFurniture)
@@ -788,7 +824,54 @@ func loadHierarchical() (err error) {
 			Reward:              row.Jiangli}
 		AllHierarchical[hierarchical.Level] = hierarchical
 	}
-	fmt.Println("你好吗21212")
 	utils.PrintJSON(AllHierarchical)
 	return
+}
+
+// Lattice ...
+type Lattice struct {
+	ID          string // 格子的编号
+	UnlockPrice int    // 解锁售价（钻石）
+	OrderID     int    // 索引
+}
+
+func loadLattice() (err error) {
+	dbLattice, err := db.LoadLattice()
+	if err != nil {
+		return
+	}
+	for _, row := range dbLattice {
+		lattice := &Lattice{
+			ID:          row.ID,
+			UnlockPrice: row.Shoujia,
+			OrderID:     row.Orderid}
+		AllLattice[lattice.OrderID] = lattice
+	}
+	utils.PrintJSON(AllLattice)
+	return
+}
+
+// MakeInfo ...
+type MakeInfo struct {
+	ID                    string `json:"id"`                    // 物品编号
+	FurnitureType         int    `json:"furnitureType"`         // 家具类型
+	SmallCategoryPictures string `json:"SmallCategoryPictures"` // 小类图片
+	FurnitureIcon         string `json:"furnitureIcon"`         // 家具icon
+	PictureEffects        int    `json:"PictureEffects"`        // 图片特效
+	FurniturePicture      string `json:"furniturePicture"`      // 家具图片
+	Name                  string `json:"name"`                  // 物品名称
+	Describe              string `json:"describe"`              //描述
+	NeeedRoleGrade        int    `json:"neeedRoleGrade"`        // 所需角色等级
+	F10                   int    `json:"f10"`                   // f10 物品等级参考（策划用）
+	WhetherSell           int    `json:"whetherSell"`           //是否可出售
+	DismantlingGets       string `json:"dismantlingGets"`       // 拆解获得
+	FashionGain           int    `json:"fashionGain"`           //增加时尚度
+	WarmthGain            int    `json:"warmthGain"`            //增加温馨度
+	CoolGain              int    `json:"coolGain"`              //增加炫酷度
+	LovelyGain            int    `json:"lovelyGain"`            //增加可爱度
+	SportGain             int    `json:"sportGain"`             //增加运动度
+	MaterialsNeed         string `json:"materialsNeed"`         // 需要材料
+	MakeTime              int    `json:"makeTime"`              //制作消耗时间(s)
+	Stars                 int    `json:"stars"`                 //星级
+	WhetherStack          int    `json:"whetherStack"`          //是否可堆叠
 }

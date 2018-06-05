@@ -420,6 +420,7 @@ type Apparel struct {
 
 // LoadApparelConf ...
 func LoadApparelConf() ([]*Apparel, error) {
+
 	sqlstr := `SELECT ` +
 		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, friendly_degree_gain, stars, allow_pileup` +
 		` FROM ` + defaultDbName + `.tbl_apparel `
@@ -467,12 +468,15 @@ type Furniture struct {
 	MotionGain       int    `json:"motion_gain"`        // motion_gain
 	Stars            int    `json:"stars"`              // stars
 	AllowPileup      int    `json:"allow_pileup"`       // allow_pileup
+	Icon             string `json:"icon"`               // iconc
+	MaterialNeed     string `json:"materialneed"`       // materialneed
+	MakeTime         int    `json:"maketime"`           // maketime
 }
 
 // LoadFurnitureConf ...
 func LoadFurnitureConf() ([]*Furniture, error) {
 	sqlstr := `SELECT ` +
-		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, dismantling, fashion_gain, warmth_gain, cool_gain, lovely_gain, motion_gain, stars, allow_pileup` +
+		`*` +
 		` FROM ` + defaultDbName + `.tbl_furniture `
 	// fmt.Println(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -480,14 +484,12 @@ func LoadFurnitureConf() ([]*Furniture, error) {
 		return nil, err
 	}
 	defer q.Close()
-
 	// load results
 	var res []*Furniture
 	for q.Next() {
 		tf := Furniture{}
-
 		// scan
-		err = q.Scan(&tf.ID, &tf.Type, &tf.OrderID, &tf.ImageName, &tf.ImageEffect, &tf.Name, &tf.Description, &tf.MinLevel, &tf.DesignerMinLevel, &tf.CanBeSold, &tf.Dismantling, &tf.FashionGain, &tf.WarmthGain, &tf.CoolGain, &tf.LovelyGain, &tf.MotionGain, &tf.Stars, &tf.AllowPileup)
+		err = q.Scan(&tf.ID, &tf.Type, &tf.OrderID, &tf.ImageName, &tf.Icon, &tf.ImageEffect, &tf.Name, &tf.Description, &tf.MinLevel, &tf.DesignerMinLevel, &tf.CanBeSold, &tf.Dismantling, &tf.FashionGain, &tf.WarmthGain, &tf.CoolGain, &tf.LovelyGain, &tf.MotionGain, &tf.Stars, &tf.AllowPileup, &tf.MakeTime, &tf.MaterialNeed)
 		if err != nil {
 			return nil, err
 		}
@@ -608,7 +610,7 @@ type TblHierarchical struct {
 // LoadHierarchical ...
 func LoadHierarchical() ([]*TblHierarchical, error) {
 	sqlstr := `SELECT ` +
-		`lv, exp, gongneng, jiaju, fushi, shjian, jiangli` +
+		`*` +
 		` FROM ` + defaultDbName + `.tbl_hierarchical`
 
 	q, err := db.Query(sqlstr)
@@ -625,6 +627,43 @@ func LoadHierarchical() ([]*TblHierarchical, error) {
 
 		// scan
 		err = q.Scan(&te.Lv, &te.Exp, &te.Gongneng, &te.Jiaju, &te.Fushi, &te.Shjian, &te.Jiangli)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &te)
+	}
+
+	return res, nil
+}
+
+// TblLattice represents a row from 'meatfloss.tbl_lattice'.
+type TblLattice struct {
+	ID      string `json:"id"`      // id
+	Shoujia int    `json:"shoujia"` // shoujia
+	Orderid int    `json:"orderid"` // 索引
+}
+
+// LoadLattice ...
+func LoadLattice() ([]*TblLattice, error) {
+	sqlstr := `SELECT ` +
+		`*` +
+		` FROM ` + defaultDbName + `.tbl_lattice`
+
+	q, err := db.Query(sqlstr)
+	if err != nil {
+		return nil, err
+	}
+
+	defer q.Close()
+
+	// load results
+	var res []*TblLattice
+	for q.Next() {
+		te := TblLattice{}
+
+		// scan
+		err = q.Scan(&te.ID, &te.Shoujia, &te.Orderid)
 		if err != nil {
 			return nil, err
 		}
