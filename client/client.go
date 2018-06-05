@@ -602,6 +602,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		return
 	}
 	//req.Data.Type==1  1添加制作   2完成制作    3解锁
+	//数据表中  1制作   0空闲   3锁定
 	//制作的添加
 	if req.Data.Type == "1" {
 		//先判断背包中的物品是否满足
@@ -641,7 +642,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = "0"
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].End = "0"
-		c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 2
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 0
 	}
 	//解锁
 	if req.Data.Type == "3" {
@@ -667,7 +668,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			}
 			//更新背包中钻石的数量
 			c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count -= gameconf.AllLattice[req.Data.Lattice].UnlockPrice
-			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 2
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 0
 		}
 	}
 	//信息的发送
@@ -2294,7 +2295,7 @@ func (c *GameClient) InitUser(userID int) (err error) {
 		lat.OrderID = lattice[k].OrderID
 		//初始化开放一个制作的格子
 		if k == 1 {
-			lat.Type = 2
+			lat.Type = 0
 		} else {
 			lat.Type = 3
 		}

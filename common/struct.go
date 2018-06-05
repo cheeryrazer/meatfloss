@@ -167,7 +167,7 @@ type Collections struct {
 // Lattice ...
 type Lattice struct {
 	Time       int    // 剩余的时间
-	Type       int    //1表示正在制作2表示空闲3表示未开启
+	Type       int    //1表示正在制作0表示空闲3表示未开启
 	LatticeNum string //数据表对应的格子号
 	Required   string //需要的材料
 	End        string //制作的物品
