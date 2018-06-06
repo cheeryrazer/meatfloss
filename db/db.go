@@ -673,3 +673,39 @@ func LoadLattice() ([]*TblLattice, error) {
 
 	return res, nil
 }
+
+// TblConfige represents a row from 'meatfloss.tbl_confige'.
+type TblConfige struct {
+	ID        int   `json:"id"`        // id
+	Gujiatime int64 `json:"gujiatime"` // gujiatime
+}
+
+// LoadConfige ...
+func LoadConfige() ([]*TblConfige, error) {
+	sqlstr := `SELECT ` +
+		`*` +
+		` FROM ` + defaultDbName + `.tbl_confige`
+
+	q, err := db.Query(sqlstr)
+	if err != nil {
+		return nil, err
+	}
+
+	defer q.Close()
+
+	// load results
+	var res []*TblConfige
+	for q.Next() {
+		te := TblConfige{}
+
+		// scan
+		err = q.Scan(&te.ID, &te.Gujiatime)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &te)
+	}
+
+	return res, nil
+}

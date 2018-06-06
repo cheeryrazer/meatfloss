@@ -37,6 +37,8 @@ var (
 	AllHierarchical map[int]*Hierarchical
 	// AllLattice ...
 	AllLattice map[int]*Lattice
+	// AllConfige ...
+	AllConfige map[int]*Confige
 )
 
 func init() {
@@ -52,6 +54,7 @@ func init() {
 	AllEmployees = make(map[string]*Employee)
 	AllHierarchical = make(map[int]*Hierarchical)
 	AllLattice = make(map[int]*Lattice)
+	AllConfige = make(map[int]*Confige)
 }
 
 // SuperGoods ...
@@ -100,6 +103,7 @@ func LoadFromDatabase() (err error) {
 	loadHierarchical()
 	loadLattice()
 	loadFurniture()
+	loadConfige()
 	return
 }
 
@@ -851,27 +855,23 @@ func loadLattice() (err error) {
 	return
 }
 
-// MakeInfo ...
-type MakeInfo struct {
-	ID                    string `json:"id"`                    // 物品编号
-	FurnitureType         int    `json:"furnitureType"`         // 家具类型
-	SmallCategoryPictures string `json:"SmallCategoryPictures"` // 小类图片
-	FurnitureIcon         string `json:"furnitureIcon"`         // 家具icon
-	PictureEffects        int    `json:"PictureEffects"`        // 图片特效
-	FurniturePicture      string `json:"furniturePicture"`      // 家具图片
-	Name                  string `json:"name"`                  // 物品名称
-	Describe              string `json:"describe"`              //描述
-	NeeedRoleGrade        int    `json:"neeedRoleGrade"`        // 所需角色等级
-	F10                   int    `json:"f10"`                   // f10 物品等级参考（策划用）
-	WhetherSell           int    `json:"whetherSell"`           //是否可出售
-	DismantlingGets       string `json:"dismantlingGets"`       // 拆解获得
-	FashionGain           int    `json:"fashionGain"`           //增加时尚度
-	WarmthGain            int    `json:"warmthGain"`            //增加温馨度
-	CoolGain              int    `json:"coolGain"`              //增加炫酷度
-	LovelyGain            int    `json:"lovelyGain"`            //增加可爱度
-	SportGain             int    `json:"sportGain"`             //增加运动度
-	MaterialsNeed         string `json:"materialsNeed"`         // 需要材料
-	MakeTime              int    `json:"makeTime"`              //制作消耗时间(s)
-	Stars                 int    `json:"stars"`                 //星级
-	WhetherStack          int    `json:"whetherStack"`          //是否可堆叠
+// Confige ...
+type Confige struct {
+	ID        int
+	Gujiatime int64
+}
+
+func loadConfige() (err error) {
+	dbConfige, err := db.LoadConfige()
+	if err != nil {
+		return
+	}
+	for _, row := range dbConfige {
+		confige := &Confige{
+			ID:        row.ID,
+			Gujiatime: row.Gujiatime}
+		AllConfige[confige.ID] = confige
+	}
+	utils.PrintJSON(AllConfige)
+	return
 }
