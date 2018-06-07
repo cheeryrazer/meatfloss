@@ -125,7 +125,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			return
 		}
 		//更新背包的数量
-		c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count -= req.Data.GoodsNum
+		c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count -= req.Data.CoinNum
 		//更新格子的时间为0
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
 	}
