@@ -65,6 +65,13 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	}
 	//制作的完成
 	if req.Data.Type == "2" {
+		//向背包添加制作成功的物品
+		var goodsIDs []string
+		var goodsCounts []int
+		goodsIDs = append(goodsIDs, req.Data.GoodsID)
+		goodsCounts = append(goodsCounts, 1)
+		c.PutToBagBatch(goodsIDs, goodsCounts)
+		//更改格子的状态
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = "0"
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].End = "0"
@@ -97,6 +104,31 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 0
 		}
 	}
+	//加速
+	if req.Data.Type == "4" {
+		//先判断背包中的数量是否满足加速的需求
+		if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID]; ok {
+			//物品在背包中、
+			backNum := c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count
+			_ = backNum
+			if backNum < gameconf.AllLattice[req.Data.Lattice].UnlockPrice {
+				reply.Meta.Error = true
+				reply.Meta.ErrorMessage = "invalid request"
+				c.SendMsg(reply)
+				return
+			}
+		} else {
+			//钻石在背包中也没有
+			reply.Meta.Error = true
+			reply.Meta.ErrorMessage = "invalid request"
+			c.SendMsg(reply)
+			return
+		}
+		//更新背包的数量
+		c.user.Bag.Cells[gameconf.AllSuperGoods["wp0001"].UniqueID].Count -= req.Data.GoodsNum
+		//更新格子的时间为0
+		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
+	}
 	//信息的发送
 	{
 		cpy := deepcopy.Copy(c.user.MakeBox)
@@ -105,6 +137,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	}
 	c.SendMsg(reply)
 	c.persistMaking()
+	c.persistBagBox()
 	return
 }
 func (c *GameClient) persistMaking() {

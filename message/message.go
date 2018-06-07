@@ -151,9 +151,10 @@ const MsgTypeMakingReq int32 = 2812
 type MakingReq struct {
 	MetaData ReqMetaData `json:"meta"`
 	Data     struct {
-		Type    string `json:"type"`    //1添加2完成
-		GoodsID string `json:"goodsID"` //请求
-		Lattice int    `json:"lattice"` //请求
+		Type     string `json:"type"`     //1添加2完成3解锁4加速
+		GoodsID  string `json:"goodsID"`  //请求
+		Lattice  int    `json:"lattice"`  //请求
+		GoodsNum int    `json:"goodsNum"` //请求
 	} `json:"data"`
 }
 

@@ -196,12 +196,25 @@ func (c *GameClient) onPeriod() {
 
 func (c *GameClient) periodCheck() {
 	c.checkTasks()
-	c.checkGuajiOutput()
+	c.checkGuajiOutput() //挂机的产出计算
 	c.coolTemperature()
 	c.checkClickoutputs()
 	c.checkUpgrade()
 	c.checkCooding()
+	c.checkMaking() //服务端离线计算制作的时间的消耗
 }
+
+func (c *GameClient) checkMaking() {
+	lattice := c.user.MakeBox.Lattice
+	for i := 0; i < len(lattice); i++ {
+		if lattice[i].Type == 1 && lattice[i].Time != 0 {
+			lattice[i].Time--
+		}
+	}
+	c.persistMaking()
+	return
+}
+
 func (c *GameClient) checkCooding() {
 	//机器的降温
 	if c.user.GuajiProfile.CDTemperature == 0 {
@@ -290,7 +303,6 @@ func (c *GameClient) checkUpgrade() {
 }
 
 func (c *GameClient) checkGuajiOutput() {
-
 	//	取出最后的一条产出的记录，根据时间判断是否进行产出的结算
 	outPut := c.user.GuajiOutputBox.GuajiOutputs
 	if len(outPut) != 0 {
