@@ -160,8 +160,8 @@ type EndInfo struct {
 
 // Collections ...
 type Collections struct {
-	GoodID string //收藏的物品的ID
-	Img    string //收藏的物品的图片
+	GoodID   string //收藏的物品的ID
+	GoodsNum int    //收藏的物品的数量
 }
 
 // Lattice ...

@@ -186,7 +186,9 @@ func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []
 		if base == 1 {
 			Collection := &common.Collections{}
 			Collection.GoodID = req.Data.GoodsID
-			Collection.Img = req.Data.Img
+
+			Collection.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID].Count
+
 			c.user.CollectionBox.Collections = append(c.user.CollectionBox.Collections, Collection)
 		}
 	} else {

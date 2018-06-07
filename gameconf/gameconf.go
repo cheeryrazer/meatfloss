@@ -96,14 +96,14 @@ func LoadFromDatabase() (err error) {
 	loadTasks()
 	loadRandomEvents()
 	loadNPCGuest()
-	// 这个放在最后
-	loadSuperGoods()
 	loadGuaji()
 	loadEmployee()
 	loadHierarchical()
 	loadLattice()
 	loadFurniture()
 	loadConfige()
+	// 这个放在最后
+	loadSuperGoods()
 	return
 }
 
