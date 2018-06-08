@@ -195,11 +195,38 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID].Count
 			_ = backNum
 			string := strconv.Itoa(backNum)
-			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + ";"
-
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == apparel[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + "|1;"
+			} else {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + "|0;"
+			}
 		} else {
 			//背包中没有
-			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0;"
+
+			num := len(c.user.CollectionBox.Collections)
+			base := 0
+			if num > 0 {
+				for a := 0; a < num; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == apparel[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0|1;"
+			} else {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0|0;"
+			}
+
 		}
 	}
 	//拿到家具
@@ -222,10 +249,36 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			backNum := c.user.Bag.Cells[funiture[key].UniqueID].Count
 			_ = backNum
 			string := strconv.Itoa(backNum)
-			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + ";"
-		} else {
 
-			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0;"
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == funiture[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + "|1;"
+			} else {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + "|0;"
+			}
+		} else {
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == funiture[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0|1;"
+			} else {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0|0;"
+			}
 		}
 	}
 	temporary.Furniture = temporaryFuniture
@@ -246,7 +299,19 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	{
 		cpy := deepcopy.Copy(c.user.CollectionBox)
 		collection, _ := cpy.(*gameuser.CollectionBox)
-		reply.Data.Collection = collection.Collections
+		num := len(collection.Collections)
+
+		if num > 0 {
+			for a := 0; a < num; a++ {
+				collect := &common.Collections{}
+				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				collect.GoodID = collection.Collections[a].GoodID
+				reply.Data.Collection = append(reply.Data.Collection, collect)
+			}
+		} else {
+			reply.Data.Collection = collection.Collections
+		}
+
 	}
 
 	c.SendMsg(reply)
@@ -300,9 +365,6 @@ func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []
 		if base == 1 {
 			Collection := &common.Collections{}
 			Collection.GoodID = req.Data.GoodsID
-
-			Collection.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID].Count
-
 			c.user.CollectionBox.Collections = append(c.user.CollectionBox.Collections, Collection)
 		}
 	} else {
@@ -321,7 +383,19 @@ func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []
 	{
 		cpy := deepcopy.Copy(c.user.CollectionBox)
 		collection, _ := cpy.(*gameuser.CollectionBox)
-		reply.Data.Collection = collection.Collections
+		num := len(collection.Collections)
+
+		if num > 0 {
+			for a := 0; a < num; a++ {
+				collect := &common.Collections{}
+				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				collect.GoodID = collection.Collections[a].GoodID
+				reply.Data.Collection = append(reply.Data.Collection, collect)
+			}
+		} else {
+			reply.Data.Collection = collection.Collections
+		}
+
 	}
 
 	c.SendMsg(reply)
@@ -376,11 +450,38 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 			backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID].Count
 			_ = backNum
 			string := strconv.Itoa(backNum)
-			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + ";"
-
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == apparel[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + "|1;"
+			} else {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + "|0;"
+			}
 		} else {
 			//背包中没有
-			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0;"
+
+			num := len(c.user.CollectionBox.Collections)
+			base := 0
+			if num > 0 {
+				for a := 0; a < num; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == apparel[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0|1;"
+			} else {
+				temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0|0;"
+			}
+
 		}
 	}
 	//拿到家具
@@ -403,10 +504,36 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 			backNum := c.user.Bag.Cells[funiture[key].UniqueID].Count
 			_ = backNum
 			string := strconv.Itoa(backNum)
-			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + ";"
-		} else {
 
-			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0;"
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == funiture[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + "|1;"
+			} else {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + "|0;"
+			}
+		} else {
+			numa := len(c.user.CollectionBox.Collections)
+			base := 0
+			if numa > 0 {
+				for a := 0; a < numa; a++ {
+					if c.user.CollectionBox.Collections[a].GoodID == funiture[key].ID {
+						base = 1
+					}
+				}
+			}
+			if base == 1 {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0|1;"
+			} else {
+				temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0|0;"
+			}
 		}
 	}
 	temporary.Furniture = temporaryFuniture
@@ -420,8 +547,21 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 	{
 		cpy := deepcopy.Copy(c.user.CollectionBox)
 		collection, _ := cpy.(*gameuser.CollectionBox)
-		reply.Data.Collection = collection.Collections
+		num := len(collection.Collections)
+
+		if num > 0 {
+			for a := 0; a < num; a++ {
+				collect := &common.Collections{}
+				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				collect.GoodID = collection.Collections[a].GoodID
+				reply.Data.Collection = append(reply.Data.Collection, collect)
+			}
+		} else {
+			reply.Data.Collection = collection.Collections
+		}
+
 	}
+
 	//制作的通知
 	{
 		cpy := deepcopy.Copy(c.user.MakeBox)
@@ -593,7 +733,7 @@ func (c *GameClient) HandleMachineUpgradeReq(metaData message.ReqMetaData, rawMs
 
 }
 
-// HandleEmployeeAdjustReq ...
+// HandleMyEmployeeReq ...
 func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []byte) (err error) {
 
 	reply := &message.MyEmployeeNotify{}
