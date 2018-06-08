@@ -135,6 +135,71 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		//更新格子的时间为0
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0
 	}
+
+	//拿到服饰
+	temporaryApparel := make(map[string]string)
+	temporary := &message.MakeLatticeBack{}
+	_ = temporary
+	// _ = temporaryApparel
+	fmt.Println("我是衣服")
+	apparel := gameconf.AllApparels
+	num := len(apparel)
+	for j := 1; j <= num; j++ {
+		key := ""
+		if j <= 9 {
+			key = "fs000"
+		} else {
+			key = "fs00"
+		}
+		string := strconv.Itoa(j)
+		key += string
+
+		if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID]; ok {
+			//此物品在背包中存在
+			backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[apparel[key].ID].UniqueID].Count
+			_ = backNum
+			string := strconv.Itoa(backNum)
+			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|" + string + ";"
+
+		} else {
+			//背包中没有
+			temporaryApparel[apparel[key].ImageName] += apparel[key].ID + "|" + apparel[key].ImageName + "|0;"
+		}
+	}
+	//拿到家具
+	temporaryFuniture := make(map[string]string)
+
+	funiture := gameconf.AllFurniture
+	numFun := len(funiture)
+	for j := 1; j <= numFun; j++ {
+		key := ""
+		if j <= 9 {
+			key = "jj000"
+		} else {
+			key = "jj00"
+		}
+		string := strconv.Itoa(j)
+		key += string
+		fmt.Println(funiture[key].UniqueID)
+		if _, ok := c.user.Bag.Cells[funiture[key].UniqueID]; ok {
+
+			backNum := c.user.Bag.Cells[funiture[key].UniqueID].Count
+			_ = backNum
+			string := strconv.Itoa(backNum)
+			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|" + string + ";"
+		} else {
+
+			temporaryFuniture[funiture[key].ImageName] += funiture[key].ID + "|" + funiture[key].ImageName + "|0;"
+		}
+	}
+	temporary.Furniture = temporaryFuniture
+	temporary.Clothes = temporaryApparel
+	{
+		cpy := deepcopy.Copy(temporary)
+		layout, _ := cpy.(*message.MakeLatticeBack)
+		reply.Data.MakeLatticeBack = layout
+	}
+
 	//信息的发送
 	{
 		cpy := deepcopy.Copy(c.user.MakeBox)
