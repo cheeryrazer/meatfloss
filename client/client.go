@@ -416,6 +416,8 @@ func (c *GameClient) checkGuajiOutput() {
 	c.PutToBagBatch(goodsIDs, goodsCounts)
 	c.persistBagBox()
 	c.persistOutput()
+	//实时更新金币
+	c.PushUserNotify()
 }
 
 func (c *GameClient) persistGuajiProfile() {

@@ -477,8 +477,10 @@ type Apparel struct {
 	FriendlyDegreeGain int    `json:"friendly_degree_gain"` // friendly_degree_gain
 	Stars              int    `json:"stars"`                // stars
 	AllowPileup        int    `json:"allow_pileup"`         // allow_pileup
-
-	UniqueID int64
+	Materialneed       string `json:"materialneed"`         // materialneed
+	Maketime           int    `json:"maketime"`             // maketime
+	NeedMaterial       []message.Guaji
+	UniqueID           int64
 }
 
 func loadApparel() (err error) {
@@ -503,11 +505,37 @@ func loadApparel() (err error) {
 			StaminaGain:        row.StaminaGain,
 			FriendlyDegreeGain: row.FriendlyDegreeGain,
 			Stars:              row.Stars,
-			AllowPileup:        row.AllowPileup}
-
+			AllowPileup:        row.AllowPileup,
+			Materialneed:       row.Materialneed,
+			Maketime:           row.Maketime,
+			NeedMaterial:       make([]message.Guaji, 1)}
 		temp := strings.Replace(apparel.ID, "fs", "", -1)
 		apparel.UniqueID, _ = strconv.ParseInt(temp, 10, 64)
 		apparel.UniqueID += 200000
+
+		//expList := []string{row.MaterialNeed}
+		guajiStrListSingle := []string{row.Materialneed}
+		for i, str := range guajiStrListSingle {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneGuaji := message.Guaji{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleGuaji{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneGuaji.List = append(oneGuaji.List, sw)
+						}
+					}
+				}
+			}
+			apparel.NeedMaterial[i] = oneGuaji
+		}
 		AllApparels[apparel.ID] = apparel
 	}
 	utils.PrintJSON(AllApparels)

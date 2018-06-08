@@ -31,37 +31,73 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	//数据表中  1制作   0空闲   3锁定
 	//制作的添加
 	if req.Data.Type == "1" {
-		//先判断背包中的物品是否满足
-		fmt.Println(gameconf.AllFurniture[req.Data.GoodsID].NeedMaterial[0].List[0].GoodsID)
-		material := gameconf.AllFurniture[req.Data.GoodsID]
-		num := len(material.NeedMaterial[0].List)
-		for a := 0; a < num; a++ {
-			//判断每件在背包中的数量
-			if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID]; ok {
-				//物品在背包中、
-				backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count
-				_ = backNum
-				if backNum < material.NeedMaterial[0].List[a].GoodsNum {
+		//这是个笨方法，vscode编译 if判断中的变量不能后面的代码识别
+		//判断类型
+		rs := []rune(req.Data.GoodsID)
+		if string(rs[0:2]) == "fs" {
+			//服饰
+			material := gameconf.AllApparels[req.Data.GoodsID]
+			num := len(material.NeedMaterial[0].List)
+			for a := 0; a < num; a++ {
+				//判断每件在背包中的数量
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID]; ok {
+					//物品在背包中、
+					backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count
+					_ = backNum
+					if backNum < material.NeedMaterial[0].List[a].GoodsNum {
+						reply.Meta.Error = true
+						reply.Meta.ErrorMessage = "invalid request"
+						c.SendMsg(reply)
+						return
+					}
+				} else {
 					reply.Meta.Error = true
 					reply.Meta.ErrorMessage = "invalid request"
 					c.SendMsg(reply)
 					return
 				}
-			} else {
-				reply.Meta.Error = true
-				reply.Meta.ErrorMessage = "invalid request"
-				c.SendMsg(reply)
-				return
 			}
+			//更改背包中的数量
+			for a := 0; a < num; a++ {
+				c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
+			}
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllApparels[req.Data.GoodsID].Materialneed
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllApparels[req.Data.GoodsID].Maketime
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].End = req.Data.GoodsID
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 1
+		} else {
+			//家具
+			material := gameconf.AllFurniture[req.Data.GoodsID]
+			num := len(material.NeedMaterial[0].List)
+			for a := 0; a < num; a++ {
+				//判断每件在背包中的数量
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID]; ok {
+					//物品在背包中、
+					backNum := c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count
+					_ = backNum
+					if backNum < material.NeedMaterial[0].List[a].GoodsNum {
+						reply.Meta.Error = true
+						reply.Meta.ErrorMessage = "invalid request"
+						c.SendMsg(reply)
+						return
+					}
+				} else {
+					reply.Meta.Error = true
+					reply.Meta.ErrorMessage = "invalid request"
+					c.SendMsg(reply)
+					return
+				}
+			}
+			//更改背包中的数量
+			for a := 0; a < num; a++ {
+				c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
+			}
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllFurniture[req.Data.GoodsID].MaterialNeed
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllFurniture[req.Data.GoodsID].MakeTime
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].End = req.Data.GoodsID
+			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 1
+
 		}
-		//更改背包中的数量
-		for a := 0; a < num; a++ {
-			c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
-		}
-		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllFurniture[req.Data.GoodsID].MaterialNeed
-		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllFurniture[req.Data.GoodsID].MakeTime
-		c.user.MakeBox.Lattice[req.Data.Lattice-1].End = req.Data.GoodsID
-		c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 1
 	}
 	//制作的完成
 	if req.Data.Type == "2" {
@@ -206,6 +242,13 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		mak, _ := cpy.(*gameuser.MakeBox)
 		reply.Data.Lattice = mak.Lattice
 	}
+	//收藏的推送
+	{
+		cpy := deepcopy.Copy(c.user.CollectionBox)
+		collection, _ := cpy.(*gameuser.CollectionBox)
+		reply.Data.Collection = collection.Collections
+	}
+
 	c.SendMsg(reply)
 	c.persistMaking()
 	c.persistBagBox()

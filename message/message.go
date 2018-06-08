@@ -644,8 +644,9 @@ const MsgMakingNotify int32 = 3911
 type MakingNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
-		Lattice         []*common.Lattice `json:"lattice"`
-		MakeLatticeBack *MakeLatticeBack  `json:"makeLatticeBack"`
+		Lattice         []*common.Lattice     `json:"lattice"`
+		MakeLatticeBack *MakeLatticeBack      `json:"makeLatticeBack"`
+		Collection      []*common.Collections `json:"collection"`
 	} `json:"data"`
 }
 

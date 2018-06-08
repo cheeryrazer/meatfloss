@@ -416,13 +416,16 @@ type Apparel struct {
 	FriendlyDegreeGain int    `json:"friendly_degree_gain"` // friendly_degree_gain
 	Stars              int    `json:"stars"`                // stars
 	AllowPileup        int    `json:"allow_pileup"`         // allow_pileup
+	Materialneed       string `json:"materialneed"`         // materialneed
+	Maketime           int    `json:"maketime"`             // maketime
+
 }
 
 // LoadApparelConf ...
 func LoadApparelConf() ([]*Apparel, error) {
 
 	sqlstr := `SELECT ` +
-		`id, type, order_id, image_name, image_effect, name, description, min_level, designer_min_level, can_be_sold, price_for_sail, intelligence_gain, stamina_gain, friendly_degree_gain, stars, allow_pileup` +
+		`*` +
 		` FROM ` + defaultDbName + `.tbl_apparel `
 
 	q, err := db.Query(sqlstr)
@@ -437,7 +440,7 @@ func LoadApparelConf() ([]*Apparel, error) {
 		ta := Apparel{}
 
 		// scan
-		err = q.Scan(&ta.ID, &ta.Type, &ta.OrderID, &ta.ImageName, &ta.ImageEffect, &ta.Name, &ta.Description, &ta.MinLevel, &ta.DesignerMinLevel, &ta.CanBeSold, &ta.PriceForSail, &ta.IntelligenceGain, &ta.StaminaGain, &ta.FriendlyDegreeGain, &ta.Stars, &ta.AllowPileup)
+		err = q.Scan(&ta.ID, &ta.Type, &ta.OrderID, &ta.ImageName, &ta.ImageEffect, &ta.Name, &ta.Description, &ta.MinLevel, &ta.DesignerMinLevel, &ta.CanBeSold, &ta.PriceForSail, &ta.IntelligenceGain, &ta.StaminaGain, &ta.FriendlyDegreeGain, &ta.Stars, &ta.AllowPileup, &ta.Materialneed, &ta.Maketime)
 		if err != nil {
 			return nil, err
 		}
