@@ -66,11 +66,17 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	//制作的完成
 	if req.Data.Type == "2" {
 		//向背包添加制作成功的物品
-		var goodsIDs []string
-		var goodsCounts []int
-		goodsIDs = append(goodsIDs, req.Data.GoodsID)
-		goodsCounts = append(goodsCounts, 1)
-		c.PutToBagBatch(goodsIDs, goodsCounts)
+		if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID]; ok {
+			//物品在背包中、
+			c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID].Count++
+		} else {
+			//物品没有在背包中
+			var goodsIDs []string
+			var goodsCounts []int
+			goodsIDs = append(goodsIDs, req.Data.GoodsID)
+			goodsCounts = append(goodsCounts, 1)
+			c.PutToBagBatch(goodsIDs, goodsCounts)
+		}
 		//更改格子的状态
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = "0"
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = 0

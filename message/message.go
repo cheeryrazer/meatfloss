@@ -792,7 +792,7 @@ type ClickStatusReq struct {
 	} `json:"data"`
 }
 
-//  ReplyUserNotify ...
+// ReplyUserNotify ...
 type ReplyUserNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {

@@ -765,7 +765,7 @@ func (c *GameClient) PutToBagBatch(goodsIDs []string, goodsCounts []int) (infos 
 			cell.Count = goodsCounts[i]
 			cell.GoodsID = goodsIDs[i]
 			cell.UniqueID = goods.UniqueID
-			c.user.Bag.Cells[uniqueID] = cell
+			c.user.Bag.Cells[goods.UniqueID] = cell
 
 			gui := &message.GoodsUpdateInfo{}
 			gui.GoodsID = cell.GoodsID
