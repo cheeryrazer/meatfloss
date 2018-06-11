@@ -195,7 +195,7 @@ func (c *GameClient) onPeriod() {
 }
 
 func (c *GameClient) periodCheck() {
-	c.checkTasks()
+	//c.checkTasks()
 	c.checkGuajiOutput() //挂机的产出计算
 	c.coolTemperature()
 	c.checkClickoutputs()
@@ -409,11 +409,12 @@ func (c *GameClient) checkGuajiOutput() {
 	c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 
 	//用户金币数的增加
-	var goodsIDs []string
-	var goodsCounts []int
-	goodsIDs = append(goodsIDs, "wp0002")
-	goodsCounts = append(goodsCounts, coinNum)
-	c.PutToBagBatch(goodsIDs, goodsCounts)
+	// var goodsIDs []string
+	// var goodsCounts []int
+	// goodsIDs = append(goodsIDs, "wp0002")
+	// goodsCounts = append(goodsCounts, coinNum)
+	// c.PutToBagBatch(goodsIDs, goodsCounts)
+	c.user.Bag.Cells[gameconf.AllSuperGoods["wp0002"].UniqueID].Count += coinNum
 	c.persistBagBox()
 	c.persistOutput()
 	//实时更新金币
@@ -645,7 +646,8 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	if err != nil {
 		return
 	}
-
+	//暂时屏蔽任务系统
+	return
 	reply := &message.FinishEventReply{}
 	reply.Meta.MessageType = "FinishEventReply"
 	reply.Meta.MessageTypeID = message.MsgTypeFinishEventReply
@@ -923,7 +925,8 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 	if err != nil {
 		return
 	}
-
+	//暂时关闭
+	return
 	reply := &message.CreateTaskReply{}
 	reply.Meta.MessageType = "CreateTaskReply"
 	reply.Meta.MessageTypeID = message.MsgTypeCreateTaskReply
@@ -1365,11 +1368,7 @@ func (c *GameClient) InitializationInfo() (err error) {
 			oneEvent.Time = tm.Format("2006-01-02 15:04:05")
 			c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 			//用户金币数的增加
-			var goodsIDs []string
-			var goodsCounts []int
-			goodsIDs = append(goodsIDs, "wp0002")
-			goodsCounts = append(goodsCounts, coinNum)
-			c.PutToBagBatch(goodsIDs, goodsCounts)
+			c.user.Bag.Cells[gameconf.AllSuperGoods["wp0002"].UniqueID].Count += coinNum
 			c.persistBagBox()
 		}
 		// c.persistGuajiProfile()

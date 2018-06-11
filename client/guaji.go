@@ -313,7 +313,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		}
 
 	}
-
+	c.PushUserNotify()
 	c.SendMsg(reply)
 	c.persistMaking()
 	c.persistBagBox()
@@ -569,6 +569,7 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 		reply.Data.Lattice = mak.Lattice
 	}
 	c.SendMsg(reply)
+	c.PushUserNotify()
 	return
 }
 
@@ -603,6 +604,7 @@ func (c *GameClient) HandleWgReq(metaData message.ReqMetaData, rawMsg []byte) (e
 	persistent.AddUser(c.UserID, newUser)
 	reply.Data.Res = "success"
 	c.SendMsg(reply)
+	c.PushUserNotify()
 	//persistent.AddUser(userID, newGuajiProfile)
 	return
 }
