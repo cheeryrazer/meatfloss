@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -29,12 +30,17 @@ func newManager() *Manager {
 func (m *Manager) onNewLogin(cli *GameClient) {
 	m.rwMutex.Lock()
 	oldCli, ok := m.allOnlineUsers[cli.UserID]
+	fmt.Println(m.allOnlineUsers)
 	if !ok {
+		fmt.Println("不在内存中----")
+		fmt.Println(m.allOnlineUsers)
 		// 没找到， 说明我就是最新用户
 		m.allOnlineUsers[cli.UserID] = cli
 		m.rwMutex.Unlock()
 		return
 	}
+	fmt.Println("在内存中----")
+	fmt.Println(m.allOnlineUsers)
 	m.allOnlineUsers[cli.UserID] = cli
 	m.rwMutex.Unlock()
 	oldCli.kickOff()
