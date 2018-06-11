@@ -384,11 +384,15 @@ func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []
 		cpy := deepcopy.Copy(c.user.CollectionBox)
 		collection, _ := cpy.(*gameuser.CollectionBox)
 		num := len(collection.Collections)
-
 		if num > 0 {
 			for a := 0; a < num; a++ {
 				collect := &common.Collections{}
-				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				//判断背包中是否有这个收藏的物品
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID]; ok {
+					collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				} else {
+					collect.GoodsNum = 0
+				}
 				collect.GoodID = collection.Collections[a].GoodID
 				reply.Data.Collection = append(reply.Data.Collection, collect)
 			}
@@ -552,14 +556,18 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 		if num > 0 {
 			for a := 0; a < num; a++ {
 				collect := &common.Collections{}
-				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				//判断背包中是否有这个收藏的物品
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID]; ok {
+					collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				} else {
+					collect.GoodsNum = 0
+				}
 				collect.GoodID = collection.Collections[a].GoodID
 				reply.Data.Collection = append(reply.Data.Collection, collect)
 			}
 		} else {
 			reply.Data.Collection = collection.Collections
 		}
-
 	}
 
 	//制作的通知

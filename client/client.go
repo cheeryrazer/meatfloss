@@ -308,13 +308,15 @@ func (c *GameClient) checkGuajiOutput() {
 	if len(outPut) != 0 {
 		//当前的时间戳
 		timestamp := time.Now().Unix()
-		fmt.Println(timestamp)
+
+		fmt.Println(gameconf.AllConfige[1].Gujiatime, "产出一次")
 		//上次结算的时间戳
 		toBeCharge := outPut[len(outPut)-1].Time
 		timeLayout := "2006-01-02 15:04:05"                             //转化所需模板
 		loc, _ := time.LoadLocation("Local")                            //重要：获取时区
 		theTime, _ := time.ParseInLocation(timeLayout, toBeCharge, loc) //使用模板在对应时区转化为time.time类型
-		sr := theTime.Unix()                                            //转化为时间戳 类型是int64
+		sr := theTime.Unix()
+		fmt.Println(timestamp - sr) //转化为时间戳 类型是int64
 		//如果两个的时间差小于10秒就不执行下面的代码
 		if (timestamp - sr) < gameconf.AllConfige[1].Gujiatime {
 			return
@@ -414,7 +416,9 @@ func (c *GameClient) checkGuajiOutput() {
 	// goodsIDs = append(goodsIDs, "wp0002")
 	// goodsCounts = append(goodsCounts, coinNum)
 	// c.PutToBagBatch(goodsIDs, goodsCounts)
+	fmt.Println("结算了")
 	c.user.Bag.Cells[gameconf.AllSuperGoods["wp0002"].UniqueID].Count += coinNum
+
 	c.persistBagBox()
 	c.persistOutput()
 	//实时更新金币
@@ -646,8 +650,10 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	if err != nil {
 		return
 	}
-	//暂时屏蔽任务系统
+
+	//任务暂时屏蔽
 	return
+
 	reply := &message.FinishEventReply{}
 	reply.Meta.MessageType = "FinishEventReply"
 	reply.Meta.MessageTypeID = message.MsgTypeFinishEventReply
@@ -892,10 +898,9 @@ func (c *GameClient) PushUserNotify() (err error) {
 	reply.Data.Exp = c.user.Profile.Experience
 	lv := c.user.Profile.Level
 	ln := len(gameconf.AllHierarchical)
-
 	var nextExp int
 	if lv >= ln {
-		nextExp = gameconf.AllHierarchical[ln].EssentialExperience
+		nextExp = gameconf.AllHierarchical[ln-1].EssentialExperience
 	} else {
 		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
 	}
@@ -926,8 +931,7 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 	if err != nil {
 		return
 	}
-	//暂时关闭
-	return
+
 	reply := &message.CreateTaskReply{}
 	reply.Meta.MessageType = "CreateTaskReply"
 	reply.Meta.MessageTypeID = message.MsgTypeCreateTaskReply
@@ -1101,7 +1105,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
 	// }
-	err = c.AddExpToUser(20)
+	err = c.AddExpToUser(200)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -1369,6 +1373,11 @@ func (c *GameClient) InitializationInfo() (err error) {
 			oneEvent.Time = tm.Format("2006-01-02 15:04:05")
 			c.user.GuajiOutputBox.GuajiOutputs = append(c.user.GuajiOutputBox.GuajiOutputs, oneEvent)
 			//用户金币数的增加
+			// var goodsIDs []string
+			// var goodsCounts []int
+			// goodsIDs = append(goodsIDs, "wp0002")
+			// goodsCounts = append(goodsCounts, coinNum)
+			// c.PutToBagBatch(goodsIDs, goodsCounts)
 			c.user.Bag.Cells[gameconf.AllSuperGoods["wp0002"].UniqueID].Count += coinNum
 			c.persistBagBox()
 		}
