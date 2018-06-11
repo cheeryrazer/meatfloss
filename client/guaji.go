@@ -751,7 +751,7 @@ func (c *GameClient) HandleMyEmployeeReq(metaData message.ReqMetaData, rawMsg []
 		return
 	}
 	if num != 0 {
-		//工作的2
+		//工作的
 		for a := 0; a < num; a++ {
 			//	go func(who int) {
 			myEmployee := &message.Employeeinfo{}
