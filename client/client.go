@@ -892,9 +892,10 @@ func (c *GameClient) PushUserNotify() (err error) {
 	reply.Data.Exp = c.user.Profile.Experience
 	lv := c.user.Profile.Level
 	ln := len(gameconf.AllHierarchical)
+
 	var nextExp int
 	if lv >= ln {
-		nextExp = gameconf.AllHierarchical[ln-1].EssentialExperience
+		nextExp = gameconf.AllHierarchical[ln].EssentialExperience
 	} else {
 		nextExp = gameconf.AllHierarchical[lv].EssentialExperience
 	}
@@ -1100,7 +1101,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
 	// }
-	err = c.AddExpToUser(200)
+	err = c.AddExpToUser(20)
 	if err != nil {
 		fmt.Println(err)
 	}
