@@ -1098,7 +1098,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	// for _, myOutputs := range c.user.GuajiOutputBox.GuajiOutputs {
 	// 	reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, *myOutputs)
 	// }
-	err = c.AddExpToUser(200)
+	err = c.AddExpToUser(20)
 	if err != nil {
 		fmt.Println(err)
 	}
