@@ -21,6 +21,9 @@ type User struct {
 	ClickOutputBox  *ClickOutputBox
 	GuajiSettlement *GuajiSettlement //挂机结算暂存数据
 	GuajiProfile    *GuajiProfile    //挂机需要的配置的信息
+	MakeBox         *MakeBox         //制作
+	CollectionBox   *CollectionBox   //收藏
+
 }
 
 // NewUser ...
@@ -38,5 +41,7 @@ func NewUser(userID int) (user *User) {
 	user.ClickOutputBox = NewClickOutputBox(userID)
 	user.GuajiSettlement = NewGuajiSettlement(userID)
 	user.GuajiProfile = NewGuajiProfile(userID)
+	user.CollectionBox = NewCollectionBox(userID)
+	user.MakeBox = NewMakeBox(userID)
 	return
 }

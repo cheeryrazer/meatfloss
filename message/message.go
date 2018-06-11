@@ -31,6 +31,23 @@ type LoginReq struct {
 	} `json:"data"`
 }
 
+// MsgTypeWgLoginReq ...
+// 外挂的登录请求
+const MsgTypeWgLoginReq int32 = 1010
+
+// WgLoginReq ...
+// 登录请求内部的具体细节目前暂未定义
+type WgLoginReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Source  string `json:"source"`
+		Account string `json:"account"`
+		Token   string `json:"token"`
+		Type    string `json:"type"`   //方便加数据测试加的   1就是正常的登陆   2就是外挂加数据的
+		UserID  string `json:"userID"` //方便加数据测试加的  正常的登陆用户id为空，
+	} `json:"data"`
+}
+
 // MsgTypeOutputReq ...
 // 产出信息的请求
 const MsgTypeOutputReq int32 = 2100
@@ -44,7 +61,7 @@ type OutputReq struct {
 	} `json:"data"`
 }
 
-// MsgEmployeeListReq ...
+// MsgTypeEmployeeListReq ...
 // 查看配置雇员的请求
 const MsgTypeEmployeeListReq int32 = 1481
 
@@ -94,6 +111,65 @@ type ShowMachineUpgradeReq struct {
 	Data     struct {
 		MachineUpgradeApply   string `json:"machineupgradeapply"`   //1升级的请求2不处理
 		MachineUpgradeConfirm string `json:"machineupgradeconfirm"` //1升级的确认2不处理
+	} `json:"data"`
+}
+
+// MsgTypeWgReq ...
+// 外挂的请求
+const MsgTypeWgReq int32 = 1888
+
+// ShowWgReq ...
+// 外挂的请求
+type ShowWgReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		UserID  string `json:"UserID"`  //用户的ID
+		GoodsID string `json:"goodsID"` //物品的ID
+		Num     string `json:"num"`     //数量
+	} `json:"data"`
+}
+
+// MsgTypeMakeLatticeReq ...
+// 制作的请求
+const MsgTypeMakeLatticeReq int32 = 2810
+
+// MakeLatticeReq ...
+// 制作页面的请求
+type MakeLatticeReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Res string `json:"res"` //请求
+	} `json:"data"`
+}
+
+// MsgTypeMakingReq ...
+// 制作的请求
+const MsgTypeMakingReq int32 = 2812
+
+// MakingReq ...
+// 制作的请求
+type MakingReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Type    string `json:"type"`    //1添加2完成3解锁4加速
+		GoodsID string `json:"goodsID"` //请求
+		Lattice int    `json:"lattice"` //请求
+		CoinNum int    `json:"coinNum"` //请求
+	} `json:"data"`
+}
+
+// MsgTypeCollectionReq ...
+// 收藏的请求
+const MsgTypeCollectionReq int32 = 2811
+
+// CollectionReq ...
+// 收藏的请求
+type CollectionReq struct {
+	MetaData ReqMetaData `json:"meta"`
+	Data     struct {
+		Type    string `json:"type"`    //1添加2取消
+		GoodsID string `json:"goodsID"` //请求
+		Img     string `json:"img"`     //请求
 	} `json:"data"`
 }
 
@@ -201,6 +277,66 @@ type LoginInitReply struct {
 
 // +++++++++++++
 
+// MsgTypeWgLoginReply ...
+// 外挂的登录请求
+const MsgTypeWgLoginReply int32 = 2010
+
+// WgLoginReply ...
+//  外挂的登录的响应
+type WgLoginReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeMakeLatticeReply ...
+// 制作页面的请求
+const MsgTypeMakeLatticeReply int32 = 2011
+
+// MakeLatticeReply ...
+//  制作页面的响应
+type MakeLatticeReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeMakingReply ...
+// 制作的请求
+const MsgTypeMakingReply int32 = 2012
+
+// MakingReply ...
+//  制作的响应
+type MakingReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeCollectionReply ...
+// 收藏的请求
+const MsgTypeCollectionReply int32 = 2012
+
+// CollectionReply ...
+//  制作的响应
+type CollectionReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
 // MsgTypeOutputReply ...
 // 产出报告请求
 const MsgTypeOutputReply int32 = 5000
@@ -268,6 +404,21 @@ const MsgTypeMachineUpgradeReply int32 = 5900
 //MachineUpgradeReply ...
 //  机器的升级
 type MachineUpgradeReply struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Dummy string `json:"dummy"`
+	} `json:"data"`
+}
+
+// +++++++++++++
+
+// MsgTypeWgReply ...
+// 外挂的请求
+const MsgTypeWgReply int32 = 5888
+
+//WgReply ...
+//  外挂的回复
+type WgReply struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		Dummy string `json:"dummy"`
@@ -459,6 +610,58 @@ type EmployeeAdjustNotify struct {
 	} `json:"data"`
 }
 
+// MsgWgtNotify ...
+const MsgWgtNotify int32 = 3888
+
+// WgNotify ...
+//  外挂的推送
+type WgNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Res string `json:"res"`
+	} `json:"data"`
+}
+
+// MsgMakeLatticeNotify ...
+const MsgMakeLatticeNotify int32 = 3910
+
+// MakeLatticNotify ...
+//  制作的推送
+type MakeLatticNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		MakeLatticeBack *MakeLatticeBack      `json:"makeLatticeBack"`
+		Collection      []*common.Collections `json:"collection"`
+		Lattice         []*common.Lattice     `json:"lattice"`
+	} `json:"data"`
+}
+
+// MsgMakingNotify ...
+const MsgMakingNotify int32 = 3911
+
+// MakingNotify ...
+//  制作的推送
+type MakingNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Lattice         []*common.Lattice     `json:"lattice"`
+		MakeLatticeBack *MakeLatticeBack      `json:"makeLatticeBack"`
+		Collection      []*common.Collections `json:"collection"`
+	} `json:"data"`
+}
+
+// MsgCollectionNotify ...
+const MsgCollectionNotify int32 = 3581
+
+// CollectionNotify ...
+//  收藏的推送
+type CollectionNotify struct {
+	Meta ReplyMetaData `json:"meta"`
+	Data struct {
+		Collection []*common.Collections `json:"collection"`
+	} `json:"data"`
+}
+
 // MsgMyEmployeeNotify ...
 const MsgMyEmployeeNotify int32 = 3580
 
@@ -591,7 +794,7 @@ type ClickStatusReq struct {
 	} `json:"data"`
 }
 
-//  ReplyUserNotify ...
+// ReplyUserNotify ...
 type ReplyUserNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
@@ -800,3 +1003,9 @@ type EmployeeinfoId1 struct {
 // type ClickOutputs struct {
 
 // }
+
+// MakeLatticeBack ...
+type MakeLatticeBack struct {
+	Furniture map[string]string `json:"furniture"`
+	Clothes   map[string]string `json:"clothes"`
+}

@@ -35,6 +35,10 @@ var (
 	AllEmployees map[string]*Employee
 	// AllHierarchical ...
 	AllHierarchical map[int]*Hierarchical
+	// AllLattice ...
+	AllLattice map[int]*Lattice
+	// AllConfige ...
+	AllConfige map[int]*Confige
 )
 
 func init() {
@@ -49,6 +53,8 @@ func init() {
 	AllGuajis = make(map[int]*Guaji)
 	AllEmployees = make(map[string]*Employee)
 	AllHierarchical = make(map[int]*Hierarchical)
+	AllLattice = make(map[int]*Lattice)
+	AllConfige = make(map[int]*Confige)
 }
 
 // SuperGoods ...
@@ -85,16 +91,19 @@ type Goods struct {
 func LoadFromDatabase() (err error) {
 	loadGoods()
 	loadApparel()
-	loadFurniture()
+
 	loadNPCs()
 	loadTasks()
 	loadRandomEvents()
 	loadNPCGuest()
-	// 这个放在最后
-	loadSuperGoods()
 	loadGuaji()
 	loadEmployee()
 	loadHierarchical()
+	loadLattice()
+	loadFurniture()
+	loadConfige()
+	// 这个放在最后
+	loadSuperGoods()
 	return
 }
 
@@ -468,8 +477,10 @@ type Apparel struct {
 	FriendlyDegreeGain int    `json:"friendly_degree_gain"` // friendly_degree_gain
 	Stars              int    `json:"stars"`                // stars
 	AllowPileup        int    `json:"allow_pileup"`         // allow_pileup
-
-	UniqueID int64
+	Materialneed       string `json:"materialneed"`         // materialneed
+	Maketime           int    `json:"maketime"`             // maketime
+	NeedMaterial       []message.Guaji
+	UniqueID           int64
 }
 
 func loadApparel() (err error) {
@@ -494,11 +505,37 @@ func loadApparel() (err error) {
 			StaminaGain:        row.StaminaGain,
 			FriendlyDegreeGain: row.FriendlyDegreeGain,
 			Stars:              row.Stars,
-			AllowPileup:        row.AllowPileup}
-
+			AllowPileup:        row.AllowPileup,
+			Materialneed:       row.Materialneed,
+			Maketime:           row.Maketime,
+			NeedMaterial:       make([]message.Guaji, 1)}
 		temp := strings.Replace(apparel.ID, "fs", "", -1)
 		apparel.UniqueID, _ = strconv.ParseInt(temp, 10, 64)
 		apparel.UniqueID += 200000
+
+		//expList := []string{row.MaterialNeed}
+		guajiStrListSingle := []string{row.Materialneed}
+		for i, str := range guajiStrListSingle {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneGuaji := message.Guaji{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleGuaji{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneGuaji.List = append(oneGuaji.List, sw)
+						}
+					}
+				}
+			}
+			apparel.NeedMaterial[i] = oneGuaji
+		}
 		AllApparels[apparel.ID] = apparel
 	}
 	utils.PrintJSON(AllApparels)
@@ -511,6 +548,7 @@ type Furniture struct {
 	Type             int    `json:"type"`               // type
 	OrderID          int    `json:"order_id"`           // order_id
 	ImageName        string `json:"image_name"`         // image_name
+	Icon             string `json:"icon"`               // iconc
 	ImageEffect      int    `json:"image_effect"`       // image_effect
 	Name             string `json:"name"`               // name
 	Description      string `json:"description"`        // description
@@ -525,8 +563,10 @@ type Furniture struct {
 	MotionGain       int    `json:"motion_gain"`        // motion_gain
 	Stars            int    `json:"stars"`              // stars
 	AllowPileup      int    `json:"allow_pileup"`       // allow_pileup
-
-	UniqueID int64
+	MakeTime         int    `json:"maketime"`           // maketime
+	MaterialNeed     string `json:"materialneed"`       // materialneed
+	NeedMaterial     []message.Guaji
+	UniqueID         int64
 }
 
 // loadFurniture ...
@@ -554,11 +594,39 @@ func loadFurniture() (err error) {
 			LovelyGain:       row.LovelyGain,
 			MotionGain:       row.MotionGain,
 			Stars:            row.Stars,
-			AllowPileup:      row.AllowPileup}
+			Icon:             row.Icon,
+			MaterialNeed:     row.MaterialNeed,
+			MakeTime:         row.MakeTime,
+			AllowPileup:      row.AllowPileup,
+			NeedMaterial:     make([]message.Guaji, 1)}
 
-		temp := strings.Replace(furniture.ID, "fs", "", -1)
+		temp := strings.Replace(furniture.ID, "jj", "", -1)
 		furniture.UniqueID, _ = strconv.ParseInt(temp, 10, 64)
 		furniture.UniqueID += 300000
+
+		//expList := []string{row.MaterialNeed}
+		guajiStrListSingle := []string{row.MaterialNeed}
+		for i, str := range guajiStrListSingle {
+			_ = str
+			// for examples, str = wp0001;1000|wp0002;1000
+			oneGuaji := message.Guaji{}
+			ones := strings.Split(str, "|")
+			for _, one := range ones {
+				// for example, one =  wp0001;1000
+				twos := strings.Split(one, ";")
+				if len(twos) == 2 {
+					goodsID := strings.TrimSpace(twos[0])
+					if goodsID != "" {
+						goodsNum, err := strconv.Atoi(twos[1])
+						if err == nil {
+							sw := message.SingleGuaji{GoodsID: goodsID, GoodsNum: goodsNum}
+							oneGuaji.List = append(oneGuaji.List, sw)
+						}
+					}
+				}
+			}
+			furniture.NeedMaterial[i] = oneGuaji
+		}
 		AllFurniture[furniture.ID] = furniture
 	}
 	utils.PrintJSON(AllFurniture)
@@ -788,7 +856,50 @@ func loadHierarchical() (err error) {
 			Reward:              row.Jiangli}
 		AllHierarchical[hierarchical.Level] = hierarchical
 	}
-	fmt.Println("你好吗21212")
 	utils.PrintJSON(AllHierarchical)
+	return
+}
+
+// Lattice ...
+type Lattice struct {
+	ID          string // 格子的编号
+	UnlockPrice int    // 解锁售价（钻石）
+	OrderID     int    // 索引
+}
+
+func loadLattice() (err error) {
+	dbLattice, err := db.LoadLattice()
+	if err != nil {
+		return
+	}
+	for _, row := range dbLattice {
+		lattice := &Lattice{
+			ID:          row.ID,
+			UnlockPrice: row.Shoujia,
+			OrderID:     row.Orderid}
+		AllLattice[lattice.OrderID] = lattice
+	}
+	utils.PrintJSON(AllLattice)
+	return
+}
+
+// Confige ...
+type Confige struct {
+	ID        int
+	Gujiatime int64
+}
+
+func loadConfige() (err error) {
+	dbConfige, err := db.LoadConfige()
+	if err != nil {
+		return
+	}
+	for _, row := range dbConfige {
+		confige := &Confige{
+			ID:        row.ID,
+			Gujiatime: row.Gujiatime}
+		AllConfige[confige.ID] = confige
+	}
+	utils.PrintJSON(AllConfige)
 	return
 }

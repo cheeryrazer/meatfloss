@@ -145,3 +145,32 @@ type ClickOutputInfo struct {
 type EmployeesInfo struct {
 	EmployeesID string // 雇员的ID
 }
+
+// RequiredInfo ...
+type RequiredInfo struct {
+	GoodID  string //需要的物品的ID
+	GoodNum int    // 需要的物品的数量
+}
+
+// EndInfo ...
+type EndInfo struct {
+	GoodID  string //产出的物品的ID
+	GoodNum int    // 产出的物品的数量
+}
+
+// Collections ...
+type Collections struct {
+	GoodID   string //收藏的物品的ID
+	GoodsNum int    //收藏的物品的数量
+}
+
+// Lattice ...
+type Lattice struct {
+	Time       int    // 剩余的时间
+	Type       int    //1表示正在制作0表示空闲3表示未开启
+	LatticeNum string //数据表对应的格子号
+	Required   string //需要的材料
+	End        string //制作的物品
+	Coin       int    //解锁需要的钻石
+	OrderID    int    //索引的ID
+}
