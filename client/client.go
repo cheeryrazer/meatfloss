@@ -1498,11 +1498,13 @@ func (c *GameClient) PushRoleInfo() (err error) {
 	// bag.
 	msg.Data.Bag.Cells = make([]message.CellInfo, 0)
 	for _, mycell := range c.user.Bag.Cells {
-		cell := message.CellInfo{}
-		cell.Count = mycell.Count
-		cell.GoodsID = mycell.GoodsID
-		cell.UniqueID = mycell.UniqueID
-		msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
+		if mycell.GoodsID != "wp0001" && mycell.GoodsID != "wp0002" { //过滤掉金币和钻石
+			cell := message.CellInfo{}
+			cell.Count = mycell.Count
+			cell.GoodsID = mycell.GoodsID
+			cell.UniqueID = mycell.UniqueID
+			msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
+		}
 	}
 
 	{
