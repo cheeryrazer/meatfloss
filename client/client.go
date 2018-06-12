@@ -308,6 +308,7 @@ func (c *GameClient) checkGuajiOutput() {
 	if len(outPut) != 0 {
 		//当前的时间戳
 		timestamp := time.Now().Unix()
+		// fmt.Println(timestamp)
 
 		fmt.Println(gameconf.AllConfige[1].Gujiatime, "产出一次")
 		//上次结算的时间戳
@@ -1259,6 +1260,8 @@ func (c *GameClient) AfterLogin() (err error) {
 	goods := c.user.Bag.Cells
 	for _, v := range goods {
 		if v.GoodsID == "wp0002" {
+			fmt.Println(v)
+			fmt.Println("888--------")
 			reply.Data.Coin = v.Count
 		}
 		if v.GoodsID == "wp0001" {

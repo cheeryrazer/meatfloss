@@ -265,7 +265,7 @@ type LoginInitReply struct {
 	Data struct {
 		Level              int     `json:"level"` // 等级
 		Exp                int     `json:"exp"`   // 经验
-		NextExp            int     `json:"nextExp"`
+		NextExp            int     `json:"nextexp"`
 		Coin               int     `json:"coin"`    // 金币
 		Diamond            int     `json:"diamond"` //钻石
 		MachineLevel       int     `json:"machineLevel"`
