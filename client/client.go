@@ -1033,8 +1033,10 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	}
 
 	{
-		if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
-			req.Data.Account = addr.IP.String()
+		if req.Data.Account == "" { //如果账号不为空的话就使用
+			if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
+				req.Data.Account = addr.IP.String()
+			}
 		}
 	}
 
