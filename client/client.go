@@ -1501,7 +1501,7 @@ func (c *GameClient) PushRoleInfo() (err error) {
 	// bag.
 	msg.Data.Bag.Cells = make([]message.CellInfo, 0)
 	for _, mycell := range c.user.Bag.Cells {
-		if mycell.GoodsID != "wp0001" && mycell.GoodsID != "wp0002" { //过滤掉金币和钻石
+		if mycell.GoodsID != "wp0001" && mycell.GoodsID != "wp0002" { //过滤掉金币和钻石的
 			cell := message.CellInfo{}
 			cell.Count = mycell.Count
 			cell.GoodsID = mycell.GoodsID
