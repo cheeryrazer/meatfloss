@@ -30,7 +30,9 @@ func newManager() *Manager {
 func (m *Manager) onNewLogin(cli *GameClient) {
 	m.rwMutex.Lock()
 	oldCli, ok := m.allOnlineUsers[cli.UserID]
-	fmt.Println(m.allOnlineUsers)
+	fmt.Print("在线")
+	fmt.Println(len(m.allOnlineUsers))
+
 	if !ok {
 		fmt.Println("不在内存中----")
 		fmt.Println(m.allOnlineUsers)

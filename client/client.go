@@ -195,7 +195,7 @@ func (c *GameClient) onPeriod() {
 }
 
 func (c *GameClient) periodCheck() {
-	//c.checkTasks()
+	c.checkTasks()
 	c.checkGuajiOutput() //挂机的产出计算
 	c.coolTemperature()
 	c.checkClickoutputs()
@@ -437,9 +437,11 @@ func (c *GameClient) persistGuajiProfile() {
 
 func (c *GameClient) checkTasks() {
 	if len(c.user.TaskBox.Tasks) == 0 {
+
 		return
 	}
-
+	//暂时关闭弹窗
+	return
 	glog.Info("found task finished ...................")
 
 	now := int(time.Now().Unix())
@@ -939,6 +941,11 @@ func (c *GameClient) HandleCreateTaskReq(metaData message.ReqMetaData, rawMsg []
 	reply.Meta.MessageSequenceID = metaData.MessageSequenceID
 
 	if len(c.user.TaskBox.Tasks) != 0 {
+		//方便测试
+		//当有任务的时候再次触发结束任务
+		c.user.TaskBox.Tasks = make([]*common.TaskInfo, 0)
+		c.persistTaskBox()
+		return
 		reply.Meta.Error = true
 		reply.Meta.ErrorMessage = "Task already exits"
 		c.SendMsg(reply)
@@ -1033,7 +1040,7 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	}
 
 	{
-		if req.Data.Account == "" { //如果账号不为空的话就使用
+		if req.Data.Account == "" {
 			if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
 				req.Data.Account = addr.IP.String()
 			}
