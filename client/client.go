@@ -440,7 +440,8 @@ func (c *GameClient) checkTasks() {
 
 		return
 	}
-
+	//暂时关闭弹窗
+	return
 	glog.Info("found task finished ...................")
 
 	now := int(time.Now().Unix())
