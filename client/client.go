@@ -441,7 +441,7 @@ func (c *GameClient) checkTasks() {
 		return
 	}
 	//暂时关闭弹窗
-	return
+	// return
 	glog.Info("found task finished ...................")
 
 	now := int(time.Now().Unix())
@@ -655,7 +655,7 @@ func (c *GameClient) HandleFinishEventReq(metaData message.ReqMetaData, rawMsg [
 	}
 
 	//任务暂时屏蔽
-	return
+	// return
 
 	reply := &message.FinishEventReply{}
 	reply.Meta.MessageType = "FinishEventReply"
@@ -728,6 +728,7 @@ func (c *GameClient) OnFinishNormalEvent(eventInfo *message.EventInfo, choice in
 	// 删除事件
 	c.persistEventBox()
 	c.SendMsg(notify)
+	c.PushUserNotify()
 }
 
 func (c *GameClient) persistBagBox() {
@@ -924,7 +925,7 @@ func (c *GameClient) persistProfile() (err error) {
 
 // OnFinishRandomEvent ...
 func (c *GameClient) OnFinishRandomEvent(eventInfo *message.EventInfo) {
-
+	c.PushUserNotify()
 }
 
 // HandleCreateTaskReq ...
