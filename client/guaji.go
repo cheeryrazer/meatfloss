@@ -326,7 +326,13 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		if num > 0 {
 			for a := 0; a < num; a++ {
 				collect := &common.Collections{}
-				collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID]; ok {
+					collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+
+				} else {
+					collect.GoodsNum = 0
+
+				}
 				collect.GoodID = collection.Collections[a].GoodID
 				reply.Data.Collection = append(reply.Data.Collection, collect)
 			}
@@ -352,6 +358,7 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			update.UniqueID = gameconf.AllSuperGoods[goodsIDsReply[a]].UniqueID
 			notify.Data.List = append(notify.Data.List, *update)
 		}
+		notify.Data.Type = "2"
 		c.SendMsg(notify)
 	}
 
@@ -401,7 +408,7 @@ func (c *GameClient) HandleCollectionReq(metaData message.ReqMetaData, rawMsg []
 			}
 		}
 	}
-	//添加收藏
+	//添加收藏收藏
 	if req.Data.Type == "1" {
 		//如果base为1就添加收藏
 		if base == 1 {
@@ -601,6 +608,7 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 				//判断背包中是否有这个收藏的物品
 				if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID]; ok {
 					collect.GoodsNum = c.user.Bag.Cells[gameconf.AllSuperGoods[collection.Collections[a].GoodID].UniqueID].Count
+
 				} else {
 					collect.GoodsNum = 0
 				}
@@ -1036,12 +1044,7 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 		return
 	}
 	//消息的推送
-	//Events: = make([]common.EventInfo, 0)
-
 	fmt.Println(c.user.GuajiOutputBox.GuajiOutputs)
-	//reply.Data.GuajiOutputs = make([]common.GuajiOutputInfo, 0)
-	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
-
 	for i := len(c.user.GuajiOutputBox.GuajiOutputs) - 1; i >= 0; i-- {
 		guajiOutput := &common.GuajiOutputInfo{}
 		guajiOutput.UserID = c.user.GuajiOutputBox.GuajiOutputs[i].UserID
@@ -1051,7 +1054,6 @@ func (c *GameClient) HandleOutputReq(metaData message.ReqMetaData, rawMsg []byte
 		guajiOutput.Items = c.user.GuajiOutputBox.GuajiOutputs[i].Items
 		reply.Data.GuajiOutputs = append(reply.Data.GuajiOutputs, guajiOutput)
 	}
-	fmt.Println(len(c.user.GuajiOutputBox.GuajiOutputs))
 	c.SendMsg(reply)
 	return
 }

@@ -529,6 +529,7 @@ type UpdateGoodsNotify struct {
 	Meta ReplyMetaData `json:"meta"`
 	Data struct {
 		List []GoodsUpdateInfo `json:"list"`
+		Type string            `json:"type"`
 	} `json:"data"`
 }
 

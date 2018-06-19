@@ -417,7 +417,6 @@ func (c *GameClient) checkGuajiOutput() {
 	// goodsIDs = append(goodsIDs, "wp0002")
 	// goodsCounts = append(goodsCounts, coinNum)
 	// c.PutToBagBatch(goodsIDs, goodsCounts)
-	fmt.Println("结算了")
 	c.user.Bag.Cells[gameconf.AllSuperGoods["wp0002"].UniqueID].Count += coinNum
 
 	c.persistBagBox()
