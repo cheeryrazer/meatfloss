@@ -27,6 +27,11 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	if err != nil {
 		return
 	}
+
+	var goodsIDsReply []string
+	var goodsCountsReply []int
+	var goodsNumDeltaReply []int
+
 	//req.Data.Type==1  1添加制作   2完成制作    3解锁
 	//数据表中  1制作   0空闲   3锁定
 	//制作的添加
@@ -60,6 +65,11 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			//更改背包中的数量
 			for a := 0; a < num; a++ {
 				c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
+				//通知背包中更改的数据
+				goodsIDsReply = append(goodsIDsReply, material.NeedMaterial[0].List[a].GoodsID)
+				goodsCountsReply = append(goodsCountsReply, c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count)
+				goodsNumDeltaReply = append(goodsNumDeltaReply, -material.NeedMaterial[0].List[a].GoodsNum)
+
 			}
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllApparels[req.Data.GoodsID].Materialneed
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllApparels[req.Data.GoodsID].Maketime
@@ -91,6 +101,10 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			//更改背包中的数量
 			for a := 0; a < num; a++ {
 				c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count -= material.NeedMaterial[0].List[a].GoodsNum
+				//通知背包中更改的数据
+				goodsIDsReply = append(goodsIDsReply, material.NeedMaterial[0].List[a].GoodsID)
+				goodsCountsReply = append(goodsCountsReply, c.user.Bag.Cells[gameconf.AllSuperGoods[material.NeedMaterial[0].List[a].GoodsID].UniqueID].Count)
+				goodsNumDeltaReply = append(goodsNumDeltaReply, -material.NeedMaterial[0].List[a].GoodsNum)
 			}
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = gameconf.AllFurniture[req.Data.GoodsID].MaterialNeed
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Time = gameconf.AllFurniture[req.Data.GoodsID].MakeTime
@@ -98,6 +112,8 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			c.user.MakeBox.Lattice[req.Data.Lattice-1].Type = 1
 
 		}
+
+		fmt.Println("我是制作")
 	}
 	//制作的完成
 	if req.Data.Type == "2" {
@@ -105,6 +121,10 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		if _, ok := c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID]; ok {
 			//物品在背包中、
 			c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID].Count++
+			//通知背包中更改的数据
+			goodsIDsReply = append(goodsIDsReply, req.Data.GoodsID)
+			goodsCountsReply = append(goodsCountsReply, c.user.Bag.Cells[gameconf.AllSuperGoods[req.Data.GoodsID].UniqueID].Count)
+			goodsNumDeltaReply = append(goodsNumDeltaReply, 1)
 		} else {
 			//物品没有在背包中
 			var goodsIDs []string
@@ -112,6 +132,10 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 			goodsIDs = append(goodsIDs, req.Data.GoodsID)
 			goodsCounts = append(goodsCounts, 1)
 			c.PutToBagBatch(goodsIDs, goodsCounts)
+			//通知背包中更改的数据
+			goodsIDsReply = append(goodsIDsReply, req.Data.GoodsID)
+			goodsCountsReply = append(goodsCountsReply, 1)
+			goodsNumDeltaReply = append(goodsNumDeltaReply, 1)
 		}
 		//更改格子的状态
 		c.user.MakeBox.Lattice[req.Data.Lattice-1].Required = "0"
@@ -176,8 +200,6 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	temporaryApparel := make(map[string]string)
 	temporary := &message.MakeLatticeBack{}
 	_ = temporary
-	// _ = temporaryApparel
-	fmt.Println("我是衣服")
 	apparel := gameconf.AllApparels
 	num := len(apparel)
 	for j := 1; j <= num; j++ {
@@ -313,10 +335,30 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 		}
 
 	}
+
+	notify := message.UpdateGoodsNotify{}
+	notify.Meta.MessageType = "UpdateGoodsNotify"
+	notify.Meta.MessageTypeID = message.MsgTypeUpdateGoodsNotify
+
+	//返回背包中更改的数据
+	updateNum := len(goodsCountsReply)
+	_ = updateNum
+	if updateNum > 0 {
+		for a := 0; a < updateNum; a++ {
+			update := &message.GoodsUpdateInfo{}
+			update.GoodsID = goodsIDsReply[a]
+			update.GoodsNum = goodsCountsReply[a]
+			update.GoodsNumDelta = goodsNumDeltaReply[a]
+			update.UniqueID = gameconf.AllSuperGoods[goodsIDsReply[a]].UniqueID
+			notify.Data.List = append(notify.Data.List, *update)
+		}
+		c.SendMsg(notify)
+	}
+
 	c.PushUserNotify()
-	c.SendMsg(reply)
 	c.persistMaking()
 	c.persistBagBox()
+	c.SendMsg(reply)
 	return
 }
 func (c *GameClient) persistMaking() {

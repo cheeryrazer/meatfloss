@@ -1105,7 +1105,7 @@ func (c *GameClient) HandleClickOutputReq(metaData message.ReqMetaData, rawMsg [
 	//消息的推送
 	//Events: = make([]common.EventInfo, 0)
 	logic.RandOutputInfo(c.user)
-	if c.user.GuajiProfile.CDTemperature>0{
+	if c.user.GuajiProfile.CDTemperature > 0 {
 		c.checkCooding()
 		return
 	}
