@@ -1040,11 +1040,11 @@ func (c *GameClient) HandleLoginReq(metaData message.ReqMetaData, rawMsg []byte)
 	}
 
 	{
-		if req.Data.Account == "" {
-			if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
-				req.Data.Account = addr.IP.String()
-			}
+		//if req.Data.Account == "" {
+		if addr, ok := c.conn.RemoteAddr().(*net.TCPAddr); ok {
+			req.Data.Account = addr.IP.String()
 		}
+		//	}
 	}
 
 	reply := &message.LoginReply{}

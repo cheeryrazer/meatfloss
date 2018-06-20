@@ -351,17 +351,26 @@ func (c *GameClient) HandleMakingReq(metaData message.ReqMetaData, rawMsg []byte
 	_ = updateNum
 	if updateNum > 0 {
 		for a := 0; a < updateNum; a++ {
-			update := &message.GoodsUpdateInfo{}
-			update.GoodsID = goodsIDsReply[a]
-			update.GoodsNum = goodsCountsReply[a]
-			update.GoodsNumDelta = goodsNumDeltaReply[a]
-			update.UniqueID = gameconf.AllSuperGoods[goodsIDsReply[a]].UniqueID
-			notify.Data.List = append(notify.Data.List, *update)
+			//查询当前的物品是否可堆叠
+			if c.GetType(goodsIDsReply[a]) == 1 { //可堆叠
+				update := &message.GoodsUpdateInfo{}
+				update.GoodsID = goodsIDsReply[a]
+				update.GoodsNum = goodsCountsReply[a]
+				update.GoodsNumDelta = goodsNumDeltaReply[a]
+				update.UniqueID = gameconf.AllSuperGoods[goodsIDsReply[a]].UniqueID
+				notify.Data.List = append(notify.Data.List, *update)
+			} else { //不可堆叠
+				update := &message.GoodsUpdateInfo{}
+				update.GoodsID = goodsIDsReply[a]
+				update.GoodsNum = goodsCountsReply[a]
+				update.GoodsNumDelta = goodsNumDeltaReply[a]
+				update.UniqueID = gameconf.AllSuperGoods[goodsIDsReply[a]].UniqueID*10 + int64(goodsCountsReply[a])
+				notify.Data.List = append(notify.Data.List, *update)
+			}
 		}
 		notify.Data.Type = "2"
 		c.SendMsg(notify)
 	}
-
 	c.PushUserNotify()
 	c.persistMaking()
 	c.persistBagBox()
@@ -484,8 +493,6 @@ func (c *GameClient) HandleMakeLatticeReq(metaData message.ReqMetaData, rawMsg [
 	temporaryApparel := make(map[string]string)
 	temporary := &message.MakeLatticeBack{}
 	_ = temporary
-	// _ = temporaryApparel
-	fmt.Println("我是衣服")
 	apparel := gameconf.AllApparels
 	num := len(apparel)
 	for j := 1; j <= num; j++ {
