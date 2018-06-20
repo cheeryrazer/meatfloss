@@ -1513,13 +1513,25 @@ func (c *GameClient) PushRoleInfo() (err error) {
 
 	// bag.
 	msg.Data.Bag.Cells = make([]message.CellInfo, 0)
+
 	for _, mycell := range c.user.Bag.Cells {
-		if mycell.GoodsID != "wp0001" && mycell.GoodsID != "wp0002" { //过滤掉金币和钻石的
-			cell := message.CellInfo{}
-			cell.Count = mycell.Count
-			cell.GoodsID = mycell.GoodsID
-			cell.UniqueID = mycell.UniqueID
-			msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
+		if mycell.GoodsID != "wp0001" && mycell.GoodsID != "wp0002" { //过滤掉金币和钻石
+			//判断是否可堆叠
+			if c.GetType(mycell.GoodsID) == 1 { //可堆叠
+				cell := message.CellInfo{}
+				cell.Count = mycell.Count
+				cell.GoodsID = mycell.GoodsID
+				cell.UniqueID = mycell.UniqueID
+				msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
+			} else { //不可堆叠
+				for i := 0; i < mycell.Count; i++ {
+					cell := message.CellInfo{}
+					cell.Count = 1
+					cell.GoodsID = mycell.GoodsID
+					cell.UniqueID = mycell.UniqueID*10 + int64(i)
+					msg.Data.Bag.Cells = append(msg.Data.Bag.Cells, cell)
+				}
+			}
 		}
 	}
 
@@ -1543,60 +1555,32 @@ func (c *GameClient) PushRoleInfo() (err error) {
 	//layout
 
 	c.SendMsg(msg)
-	// var msgEvent = message.EventNotify{}
-	// msgEvent.Meta.MessageType = "EventNotify"
-	// msgEvent.Meta.MessageTypeID = message.MsgTypeEventNotify
-	// msgEvent.Data.Events = make([]*message.EventInfo, 0)
-	// for _, myEvent := range c.user.EventBox.Events {
-	// 	msgEvent.Data.Events = append(msgEvent.Data.Events, myEvent)
-
-	// }
-	// msgEvent.Data.UserID = c.user.UserID
-	// c.SendMsg(msgEvent)
-	// //task
-	// var msgTask = message.TaskNotify{}
-	// msgTask.Meta.MessageType = "TaskNotify"
-	// msgTask.Meta.MessageTypeID = message.MsgTypeTaskNotify
-	// msgTask.Data.Tasks = make([]*common.TaskInfo, 0)
-
-	// for _, myTask := range c.user.TaskBox.Tasks {
-	// 	// 必要的时候, deepcopy一份
-	// 	msgTask.Data.Tasks = append(msgTask.Data.Tasks, myTask)
-	// }
-	// msgTask.Data.UserID = c.user.UserID
-	// c.SendMsg(msgTask)
-
-	// // send events.
-	// {
-
-	// 	var msg = message.EventNotify{}
-	// 	msg.Meta.MessageType = "EventNotify"
-	// 	msg.Meta.MessageTypeID = message.MsgTypeEventNotify
-	// 	msg.Data.Events = make([]*message.EventInfo, 0)
-	// 	for _, myEvent := range c.user.EventBox.Events {
-	// 		msg.Data.Events = append(msg.Data.Events, myEvent)
-
-	// 	}
-	// 	msg.Data.UserID = c.user.UserID
-	// 	c.SendMsg(msg)
-	// }
-
-	// {
-
-	// 	var msg = message.TaskNotify{}
-	// 	msg.Meta.MessageType = "TaskNotify"
-	// 	msg.Meta.MessageTypeID = message.MsgTypeTaskNotify
-	// 	msg.Data.Tasks = make([]*common.TaskInfo, 0)
-
-	// 	for _, myTask := range c.user.TaskBox.Tasks {
-	// 		// 必要的时候, deepcopy一份
-	// 		msg.Data.Tasks = append(msg.Data.Tasks, myTask)
-	// 	}
-	// 	msg.Data.UserID = c.user.UserID
-	// 	c.SendMsg(msg)
-	// }
 
 	return
+}
+
+// GetType ...
+func (c *GameClient) GetType(typeZhi string) int {
+	rs := []rune(typeZhi)
+	head := string(rs[0:2])
+	if head == "fs" {
+		confige := gameconf.AllApparels
+		_ = confige
+		return confige[typeZhi].AllowPileup
+	}
+	if head == "wp" {
+		confige := gameconf.AllGoods
+		_ = confige
+
+		return confige[typeZhi].AllowPileup
+	}
+
+	if head == "jj" {
+		confige := gameconf.AllFurniture
+		_ = confige
+		return confige[typeZhi].AllowPileup
+	}
+	return 11
 }
 
 // InitUser ...
