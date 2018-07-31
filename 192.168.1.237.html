@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!-- saved from url=(0026)http://192.168.1.237:8080/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<script>  
+window.addEventListener("load", function(evt) {
+
+    var output = document.getElementById("output");
+    var input = document.getElementById("input");
+    var ws;
+
+    var print = function(message) {
+        var d = document.createElement("div");
+        d.innerHTML = message;
+        output.appendChild(d);
+    };
+
+    document.getElementById("open").onclick = function(evt) {
+        if (ws) {
+            return false;
+        }
+        ws = new WebSocket("ws:\/\/http://meatfloss.utan.com:8081\/meatfloss");
+        ws.onopen = function(evt) {
+            print("OPEN");
+        }
+        ws.onclose = function(evt) {
+            print("CLOSE");
+            ws = null;
+        }
+        ws.onmessage = function(evt) {
+            print("RESPONSE: " + evt.data);
+        }
+        ws.onerror = function(evt) {
+            print("ERROR: " + evt.data);
+        }
+        return false;
+    };
+
+    document.getElementById("send").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        print("SEND: " + input.value);
+        ws.send(input.value);
+        return false;
+    };
+
+    document.getElementById("close").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        ws.close();
+        return false;
+    };
+
+    document.getElementById("sendLogin").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+
+        ws.send('{ "meta":{ "messageType":"LoginReq", "messageTypeId":1000, "messageSequenceId":12}, "data":{ "source":"utantop", "account":"15967170659", "token":"8972348793289478928" } }');
+        return false;
+    };
+
+
+
+    document.getElementById("sendCreateTask").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        ws.send(' { "meta":{ "messageType":"CreateTaskReq", "messageTypeId":1300, "messageSequenceId":13 }, "data":{ "npcId":"npc001"} }');
+        return false;
+    };
+
+
+
+
+    document.getElementById("finishEvent").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        ws.send(' { "meta":{ "messageType":"FinishEventReq", "messageTypeId":1200, "messageSequenceId":14 }, "data":{ "eventGenId":"18", "choice":1} }');
+        return false;
+    };
+
+
+
+    document.getElementById("testlayout").onclick = function(evt) {
+
+        if (!ws) {
+            return false;
+        }  
+              
+        ws.send(' { "meta": { "messageType": "SaveClientLayoutReq", "messageTypeId": 1400, "messageSequenceId": 15 }, "data":{ "layout": { "floor1": { "1": "WP001" }, "floor2": { "1": "WP001" }, "floor3": { "1": "WP001" }, "dress": { "skin": "999", "type": "WP002"} } }}');
+        return false;
+    };
+    
+    document.getElementById("testTest").onclick = function(evt) {
+
+if (!ws) {  
+    return false;
+}          
+      
+ws.send(' { "meta": { "messageType": "SaveTestReq", "messageTypeId": 2000, "messageSequenceId": 16 }, "data": { "layout": { "floor1": { "1": "WP001" }, "floor2": { "1": "WP001" }, "floor3": { "1": "WP001" }, "dress": { "skin": "WP001", "type": "WP002", "3": "WP003" } } } }');
+return false;
+};
+      document.getElementById("clickOutput").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        ws.send(' { "meta":{ "messageType":"ClickOutputReq", "messageTypeId":6000, "messageSequenceId":20 }, "data":{ "GooID":"npc001"} }');
+        return false;
+    };
+        document.getElementById("pick").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        ws.send(' { "meta":{ "messageType":"PickReq", "messageTypeId":7300, "messageSequenceId":1527585326 }, "data":{ "GoodID":"wp0006","Num":12} }');
+        return false;
+    };
+        document.getElementById("pickCoin").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        ws.send(' { "meta":{ "messageType":"PickCoinReq", "messageTypeId":7400, "messageSequenceId":1527585326 }, "data":{ "Num":20,"Type":1} }');
+        return false;
+    };
+});
+</script>
+<link type="text/css" rel="stylesheet" charset="UTF-8" href="./192.168.1.237_files/translateelement.css"></head>
+<body>
+<table>
+<tbody><tr><td valign="top" width="50%">
+<p>Click "Open" to create a connection to the server, 
+"Send" to send a message to the server and "Close" to close the connection. 
+You can change the message and send multiple times.
+</p><p>
+</p><form>
+<button id="open">Open</button>
+
+<button id="sendLogin">登录</button>
+<button id="sendCreateTask">创建任务</button>
+<button id="finishEvent">完成事件</button>
+<button id="close">Close</button>
+<button id="testlayout">testlayout</button>
+<button id="testTest">我是测试</button>
+<button id="clickOutput">点击产出</button>
+<button id="pick">捡起</button>
+<button id="pickCoin">捡金币</button>
+<p><input id="input" type="text" value="Hello world!">
+<button id="send">Send</button>
+
+</p></form>
+</td><td valign="top" width="50%">
+<div id="output"></div>
+</td></tr></tbody></table><div id="goog-gt-tt" class="skiptranslate" dir="ltr"><div style="padding: 8px;"><div><div class="logo"><img src="./192.168.1.237_files/translate_24dp.png" width="20" height="20" alt="Google 翻译"></div></div></div><div class="top" style="padding: 8px; float: left; width: 100%;"><h1 class="title gray">原文</h1></div><div class="middle" style="padding: 8px;"><div class="original-text"></div></div><div class="bottom" style="padding: 8px;"><div class="activity-links"><span class="activity-link">提供更好的翻译建议</span><span class="activity-link"></span></div><div class="started-activity-container"><hr style="color: #CCC; background-color: #CCC; height: 1px; border: none;"><div class="activity-root"></div></div></div><div class="status-message" style="display: none;"></div></div>
+
+
+<div class="goog-te-spinner-pos"><div class="goog-te-spinner-animation"><svg xmlns="http://www.w3.org/2000/svg" class="goog-te-spinner" width="96px" height="96px" viewBox="0 0 66 66"><circle class="goog-te-spinner-path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div></body></html>
